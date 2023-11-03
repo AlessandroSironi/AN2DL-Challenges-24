@@ -163,4 +163,4 @@ cython_debug/
 .DS_Store
 
 #TestSet
-Challenge\ 1/test_set/
+Challenge\ 1/data/
