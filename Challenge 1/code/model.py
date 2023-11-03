@@ -41,10 +41,11 @@ import seaborn as sns
 
 from sklearn.preprocessing import LabelEncoder
 
+model_name = "CNN_1"
+
 class model:
     def __init__(self, path):
-        train_model()
-        self.model = tf.keras.models.load_model(os.path.join(path, 'SubmissionModel'))
+        self.model = tf.keras.models.load_model(os.path.join(path, model_name))
 
     def predict(self, X):
         
@@ -66,7 +67,7 @@ def train_model():
             zip_ref.extractall('data/phase_1/') """
 
     # Load images from the .npz file
-    data_path = 'public_data.npz'
+    data_path = 'Challenge 1/data/phase_1/public_data.npz'
     data = np.load(data_path, allow_pickle=True)
 
     images = data['data']
@@ -187,7 +188,7 @@ def train_model():
         callbacks = callbacks
     ).history
 
-    model.save('SubmissionModel')
+    model.save(model_name)
 
     """ # Plot the training
     plt.figure(figsize=(15,5))
@@ -208,12 +209,11 @@ def train_model():
 
     # ------------------------------------------
 if __name__ == "__main__":
-    
     train = True
     if (train):
         train_model()
-    else:
-        print("No training :(")
+    #else:
+        #print("No training :(")
     #_model = model(os.getcwd())
 
 
@@ -245,4 +245,4 @@ if __name__ == "__main__":
     for y in pred:
         print(y, "\n") """
 
-    print("Done!")
+    #print("Done!")
