@@ -167,3 +167,4 @@ Challenge\ 1/data/
 
 #Configs
 configs/
+*.npz
