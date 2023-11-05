@@ -29,7 +29,7 @@ tf.get_logger().setLevel(logging.ERROR)
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 tf.random.set_seed(seed)
 tf.compat.v1.set_random_seed(seed)
-#print(tf.__version__)
+print(tf.__version__)
 
 # Import other libraries
 #import cv2
@@ -40,6 +40,8 @@ from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_sc
 import seaborn as sns
 
 from sklearn.preprocessing import LabelEncoder
+
+print("Finished loading libraries")
 
 model_name = "CNN_1"
 
@@ -56,6 +58,19 @@ class model:
 
         return out
     
+
+def show_images(images):
+    # Show all images in in images array. Make a scrollable window if there are more than 50 images and display them in a grid
+    num_images = len(images)    # Number of images
+    num_cols = int(np.ceil(np.sqrt(num_images)))    # Number of columns in the grid
+    num_rows = int(np.ceil(num_images / num_cols))
+
+    for i in range(num_images):
+        plt.subplot(num_rows, num_cols, i+1)
+        plt.imshow(images[i])
+        plt.axis('off')
+    plt.show()
+    
 def train_model():
     # Conditional check for unzipping
     """ unzip = False
@@ -67,7 +82,7 @@ def train_model():
             zip_ref.extractall('data/phase_1/') """
 
     # Load images from the .npz file
-    data_path = 'Challenge 1/data/phase_1/public_data.npz'
+    data_path = 'public_data.npz'
     data = np.load(data_path, allow_pickle=True)
 
     images = data['data']
@@ -80,25 +95,16 @@ def train_model():
         # Convert image from BGR to RGB
         images[i] = images[i][...,::-1]
         i = i+1
-        """ if (i % 100 == 0):
+        if (i % 500 == 0):
             print("Processing image: ", i, "\n")
- """
+    print("Finished processing images")
+
     # ------------------------------------------
     # Display images to check if correctly loaded
-    """ display_images = False
-
+    
+    display_images = False
     if display_images:
-        # Number of images to display
-        num_img = 10
-
-        # Create subplots for displaying animals
-        fig, axes = plt.subplots(2, num_img//2, figsize=(20, 9))
-        for i in range(num_img):
-            ax = axes[i%2, i%num_img//2]
-            ax.imshow(np.clip(images[i], 0, 255))  # Display clipped animal images
-            ax.axis('off')
-        plt.tight_layout()
-        plt.show() """
+        show_images(images)
 
     # ------------------------------------------
     labels = np.array(labels) #TODO: Check if needed
@@ -112,13 +118,13 @@ def train_model():
     # Further split the test set into test and validation sets, stratifying the labels
     images_test, images_val, labels_test, labels_val = train_test_split(images_test, labels_test, test_size=0.5, stratify=np.argmax(labels_test, axis=1), random_state=seed)
 
-    """ print("\n\nSHAPES OF THE SETS:\n")
+    print("\n\nSHAPES OF THE SETS:\n")
 
     print(f"images_train shape: {images_train.shape}, labels_train shape: {labels_train.shape}")
     print(f"images_val shape: {images_val.shape}, labels_val shape: {labels_val.shape}")
     print(f"images_test shape: {images_test.shape}, labels_test shape: {labels_test.shape}")
 
-    print("\n\n") """
+    print("\n\n")
 
     # ------------------------------------------
     # Define input shape, output shape, batch size, and number of epochs
