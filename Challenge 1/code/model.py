@@ -29,7 +29,7 @@ tf.get_logger().setLevel(logging.ERROR)
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 tf.random.set_seed(seed)
 tf.compat.v1.set_random_seed(seed)
-print(tf.__version__)
+#print(tf.__version__)
 
 # Import other libraries
 #import cv2
@@ -43,7 +43,7 @@ from sklearn.preprocessing import LabelEncoder
 
 print("Finished loading libraries")
 
-model_name = "CNN_1"
+model_name = "CNN_2_Dropout"
 
 class model:
     def __init__(self, path):
@@ -70,17 +70,53 @@ def show_images(images):
         plt.imshow(images[i])
         plt.axis('off')
     plt.show()
+
+def plot_results(history):
+    """ print("Plotting results...")
+    # Plot the training
+    plt.figure(figsize=(15,5))
+    plt.plot(history['loss'], alpha=.3, color='#ff7f0e', linestyle='--')
+    plt.plot(history['val_loss'], label='Vanilla CNN', alpha=.8, color='#ff7f0e')
+    plt.legend(loc='upper left')
+    plt.title('Categorical Crossentropy')
+    plt.grid(alpha=.3)
+
+    plt.figure(figsize=(15,5))
+    plt.plot(history['accuracy'], alpha=.3, color='#ff7f0e', linestyle='--')
+    plt.plot(history['val_accuracy'], label='Vanilla CNN', alpha=.8, color='#ff7f0e')
+    plt.legend(loc='upper left')
+    plt.title('Accuracy')
+    plt.grid(alpha=.3)
+
+    plt.show() """
+
+    # Find the epoch with the highest validation accuracy
+    best_epoch = np.argmax(history['val_accuracy'])
+
+    # Plot training and validation performance metrics
+    plt.figure(figsize=(20, 5))
+
+    # Plot training and validation loss
+    plt.plot(history['loss'], label='Training', alpha=0.8, color='#ff7f0e', linewidth=3)
+    plt.plot(history['val_loss'], label='Validation', alpha=0.8, color='#4D61E2', linewidth=3)
+    plt.legend(loc='upper left')
+    plt.title('Categorical Crossentropy')
+    plt.grid(alpha=0.3)
+
+    plt.figure(figsize=(20, 5))
+
+    # Plot training and validation accuracy, highlighting the best epoch
+    plt.plot(history['accuracy'], label='Training', alpha=0.8, color='#ff7f0e', linewidth=3)
+    plt.plot(history['val_accuracy'], label='Validation', alpha=0.8, color='#4D61E2', linewidth=3)
+    plt.plot(best_epoch, history['val_accuracy'][best_epoch], marker='*', alpha=0.8, markersize=10, color='#4D61E2')
+    plt.legend(loc='upper left')
+    plt.title('Accuracy')
+    plt.grid(alpha=0.3)
+
+    plt.show()
     
 def train_model():
-    # Conditional check for unzipping
-    """ unzip = False
-
-    if unzip:
-        import zipfile
-        # Unzip the public_data.zip file if the 'unzip' flag is True
-        with zipfile.ZipFile('../data/phase_1/public_data.zip', 'r') as zip_ref:
-            zip_ref.extractall('data/phase_1/') """
-
+    print("Training model...")
     # Load images from the .npz file
     data_path = 'public_data.npz'
     data = np.load(data_path, allow_pickle=True)
@@ -95,10 +131,38 @@ def train_model():
         # Convert image from BGR to RGB
         images[i] = images[i][...,::-1]
         i = i+1
-        if (i % 500 == 0):
-            print("Processing image: ", i, "\n")
+        if (i % 1000 == 0):
+            print("Processing image: ", i)
     print("Finished processing images")
 
+    # Sanitize input
+    # Delete trolololol and shrek
+    positions_to_remove = [58, 95, 137, 138, 171, 207, 338, 412, 434, 486, 506, 529, 571, 
+                           599, 622, 658, 692, 701, 723, 725, 753, 779, 783, 827, 840, 880, 
+                           898, 901, 961, 971, 974, 989, 1028, 1044, 1064, 1065, 1101, 1149, 
+                           1172, 1190, 1191, 1265, 1268, 1280, 1333, 1384, 1443, 1466, 1483, 
+                           1528, 1541, 1554, 1594, 1609, 1630, 1651, 1690, 1697, 1752, 1757,
+                           1759, 1806, 1828, 1866, 1903, 1938, 1939, 1977, 1981, 1988, 2022, 
+                           2081, 2090, 2150, 2191, 2192, 2198, 2261, 2311, 2328, 2348, 2380, 
+                           2426, 2435, 2451, 2453, 2487, 2496, 2515, 2564, 2581, 2593, 2596, 
+                           2663, 2665, 2675, 2676, 2727, 2734, 2736, 2755, 2779, 2796, 2800, 
+                           2830, 2831, 2839, 2864, 2866, 2889, 2913, 2929, 2937, 3033, 3049, 
+                           3055, 2086, 3105, 3108, 3144, 3155, 3286, 3376, 3410, 3436, 3451,
+                           3488, 3490, 3572, 3583, 3666, 3688, 3700, 3740, 3770, 3800, 3801, 
+                           3802, 3806, 3811, 3821, 3835, 3862, 3885, 3896, 3899, 3904, 3927, 
+                           3931, 3946, 3950, 3964, 3988, 3989, 4049, 4055, 4097, 4100, 4118, 
+                           4144, 4150, 4282, 4310, 4314, 4316, 4368, 4411, 4475, 4476, 4503,
+                           4507, 4557, 4605, 4618, 4694, 4719, 4735, 4740, 4766, 4779, 4837,
+                           4848, 4857, 4860, 4883, 4897, 4903, 4907, 4927, 5048, 5080, 5082, 
+                           5121, 5143, 5165, 5171]
+    n = 0
+    for pos in positions_to_remove:
+        new_pos = pos - n
+        print("Removing image at position: ", pos, " - New Position is ", new_pos)
+        images = np.delete(images, new_pos, axis=0)
+        labels = np.delete(labels, new_pos, axis=0)
+        n = n + 1
+        
     # ------------------------------------------
     # Display images to check if correctly loaded
     
@@ -141,8 +205,11 @@ def train_model():
         tfk.callbacks.EarlyStopping(monitor='val_accuracy', patience=100, restore_best_weights=True, mode='auto'),
     ]
 
+    dropout_rate = 0.1
+
     # INSERT AUGMENTATION HERE
-    def build_model(input_shape=input_shape, output_shape=output_shape):
+
+    def build_model(input_shape=input_shape, output_shape=output_shape, dropout_rate = dropout_rate):
         tf.random.set_seed(seed)
 
         # Build the neural network layer by layer
@@ -169,6 +236,8 @@ def train_model():
 
         x = tfkl.GlobalAveragePooling2D(name='gap')(x)
 
+        x = tfkl.Dropout(rate=dropout_rate, name='dropout')(x)
+
         output_layer = tfkl.Dense(units=2, activation='softmax',name='Output')(x)
 
         # Connect input and output through the Model class
@@ -179,7 +248,7 @@ def train_model():
 
         # Return the model
         return model
-
+    
     model = build_model()
     model.summary()
     #tfk.utils.plot_model(model, expand_nested=True, show_shapes=True)
@@ -196,32 +265,56 @@ def train_model():
 
     model.save(model_name)
 
-    """ # Plot the training
-    plt.figure(figsize=(15,5))
-    plt.plot(history['loss'], alpha=.3, color='#ff7f0e', linestyle='--')
-    plt.plot(history['val_loss'], label='Vanilla CNN', alpha=.8, color='#ff7f0e')
-    plt.legend(loc='upper left')
-    plt.title('Categorical Crossentropy')
-    plt.grid(alpha=.3)
-
-    plt.figure(figsize=(15,5))
-    plt.plot(history['accuracy'], alpha=.3, color='#ff7f0e', linestyle='--')
-    plt.plot(history['val_accuracy'], label='Vanilla CNN', alpha=.8, color='#ff7f0e')
-    plt.legend(loc='upper left')
-    plt.title('Accuracy')
-    plt.grid(alpha=.3)
-
-    plt.show() """
-
     # ------------------------------------------
+    plot_result = True
+    if plot_result:
+        plot_results(history)
+    # ------------------------------------------
+
+    evaluate = True
+    if evaluate:
+        # Evaluate the model on the test set
+        # Copilot generated version:
+        # test_loss, test_acc = model.evaluate(images_test, labels_test, verbose=2)
+
+        # Notebooks version:
+        # Predict labels for the entire test set
+        predictions = model.predict(images_test, verbose=0)
+
+        # Display the shape of the predictions
+        print("Predictions Shape:", predictions.shape)
+
+        # Compute the confusion matrix
+        cm = confusion_matrix(np.argmax(labels_test, axis=-1), np.argmax(predictions, axis=-1))
+
+        # Compute classification metrics
+        accuracy = accuracy_score(np.argmax(labels_test, axis=-1), np.argmax(predictions, axis=-1))
+        precision = precision_score(np.argmax(labels_test, axis=-1), np.argmax(predictions, axis=-1), average='macro')
+        recall = recall_score(np.argmax(labels_test, axis=-1), np.argmax(predictions, axis=-1), average='macro')
+        f1 = f1_score(np.argmax(labels_test, axis=-1), np.argmax(predictions, axis=-1), average='macro')
+
+        # Display the computed metrics
+        print('Accuracy:', accuracy.round(4))
+        print('Precision:', precision.round(4))
+        print('Recall:', recall.round(4))
+        print('F1:', f1.round(4))
+
+        print("\n0:Healthy, 1:Unhealthy\n")
+        # Plot the confusion matrix
+        plt.figure(figsize=(10, 8))
+        sns.heatmap(cm.T, annot=True, xticklabels=np.unique(labels_test), yticklabels=np.unique(labels_test), cmap='Blues')
+        plt.xlabel('True labels')
+        plt.ylabel('Predicted labels')
+        plt.show()
+
+# ------------------------------------------
 if __name__ == "__main__":
     train = True
     if (train):
         train_model()
-    #else:
-        #print("No training :(")
+    else:
+        print("No training :(")
     #_model = model(os.getcwd())
-
 
     """ # Load images from the .npz file
     __data_path = 'Challenge 1/data/phase_1/public_data.npz'
