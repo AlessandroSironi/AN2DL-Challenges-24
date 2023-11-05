@@ -43,7 +43,7 @@ from sklearn.preprocessing import LabelEncoder
 
 print("Finished loading libraries")
 
-model_name = "CNN_2_Dropout"
+model_name = "CNN_2_Dropout_Sanitized"
 
 class model:
     def __init__(self, path):
@@ -135,6 +135,7 @@ def train_model():
             print("Processing image: ", i)
     print("Finished processing images")
 
+    # ------------------------------------------
     # Sanitize input
     # Delete trolololol and shrek
     positions_to_remove = [58, 95, 137, 138, 171, 207, 338, 412, 434, 486, 506, 529, 571, 
@@ -155,6 +156,7 @@ def train_model():
                            4507, 4557, 4605, 4618, 4694, 4719, 4735, 4740, 4766, 4779, 4837,
                            4848, 4857, 4860, 4883, 4897, 4903, 4907, 4927, 5048, 5080, 5082, 
                            5121, 5143, 5165, 5171]
+    print("Len of positions_to_remove: ", len(positions_to_remove))
     n = 0
     for pos in positions_to_remove:
         new_pos = pos - n
@@ -162,15 +164,9 @@ def train_model():
         images = np.delete(images, new_pos, axis=0)
         labels = np.delete(labels, new_pos, axis=0)
         n = n + 1
-        
-    # ------------------------------------------
-    # Display images to check if correctly loaded
-    
-    display_images = False
-    if display_images:
-        show_images(images)
 
     # ------------------------------------------
+
     labels = np.array(labels) #TODO: Check if needed
 
     labels = LabelEncoder().fit_transform(labels)
@@ -205,7 +201,7 @@ def train_model():
         tfk.callbacks.EarlyStopping(monitor='val_accuracy', patience=100, restore_best_weights=True, mode='auto'),
     ]
 
-    dropout_rate = 0.1
+    dropout_rate = 0.15
 
     # INSERT AUGMENTATION HERE
 
@@ -344,4 +340,4 @@ if __name__ == "__main__":
     for y in pred:
         print(y, "\n") """
 
-    #print("Done!")
+    print("Done!")

@@ -18,10 +18,11 @@ python3 -m jupytext --to notebook model.py
 
 ## Scores
 
-| Model Name 		 | Accuracy | Precision | Recall | F1 Score |
-| ------------------ | -------- | --------- | ------ | -------- |
-| CNN_1      		 | 0.5800   | 0.4688    | 0.7895 | 0.5882   |
-| CNN_2_Dropout      | 0.4300   | 0.3855    | 0.8421 | 0.5289   |
+| Model Name 		           | Accuracy | Precision | Recall | F1 Score |
+| ---------------------------- | -------- | --------- | ------ | -------- |
+| CNN_1      			       | 0.5800   | 0.4688    | 0.7895 | 0.5882   |
+| CNN_2_Dropout      		   | 0.4300   | 0.3855    | 0.8421 | 0.5289   |
+| CNN_2_Dropout_Sanitized      | 0.6200   | 0.5000    | 0.5526 | 0.5250   |
 
 ## 03/10/2023 - CNN_1
 CNN_1 -> copy/paste from Labs to make it work.
