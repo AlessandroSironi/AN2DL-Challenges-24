@@ -45,6 +45,8 @@ print("Finished loading libraries")
 
 model_name = "CNN_3_Preprocessing_2"
 
+print("[!] Model name: ", model_name)
+
 class model:
     def __init__(self, path):
         self.model = tf.keras.models.load_model(os.path.join(path, model_name))
