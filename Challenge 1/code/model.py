@@ -43,7 +43,7 @@ from sklearn.preprocessing import LabelEncoder
 
 print("Finished loading libraries")
 
-model_name = "CNN_2_Dropout_Sanitized"
+model_name = "CNN_3_Preprocessing_2"
 
 class model:
     def __init__(self, path):
@@ -203,13 +203,31 @@ def train_model():
 
     dropout_rate = 0.15
 
-    # INSERT AUGMENTATION HERE
-
     def build_model(input_shape=input_shape, output_shape=output_shape, dropout_rate = dropout_rate):
         tf.random.set_seed(seed)
 
+         # Augmentation
+        preprocessing = tf.keras.Sequential([
+            #tfkl.RandomBrightness(0.2, value_range=(0,1)),
+            #tfkl.RandomTranslation(0.2,0.2),
+            #tfkl.RandomContrast(0.75),
+            tfkl.RandomZoom(0.2),
+            tfkl.RandomFlip("horizontal"),
+        ], name='preprocessing')
+
+        """ preprocessing = tf.keras.Sequential([
+            tfkl.RandomBrightness(0.15, value_range=(0,1)),
+            tfkl.RandomTranslation(0.15,0.15),
+            tfkl.RandomContrast(0.15),
+            tfkl.RandomZoom(0.15),
+            tfkl.RandomFlip("horizontal"),
+        ], name='preprocessing') """
+
         # Build the neural network layer by layer
         input_layer = tfkl.Input(shape=input_shape, name='Input')
+
+        # Preprocessing Layer
+        preprocessing = preprocessing(input_layer)
 
         x = tfkl.Conv2D(filters=32, kernel_size=3, padding='same', name='conv0')(input_layer)
         x = tfkl.ReLU(name='relu0')(x)
