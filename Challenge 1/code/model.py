@@ -43,7 +43,7 @@ from sklearn.preprocessing import LabelEncoder
 
 print("Finished loading libraries")
 
-model_name = "CNN_3_Preprocessing_2"
+model_name = "CNN_4_Preprocessing_2"
 
 print("[!] Model name: ", model_name)
 
@@ -210,9 +210,10 @@ def train_model():
 
          # Augmentation
         preprocessing = tf.keras.Sequential([
-            #tfkl.RandomBrightness(0.2, value_range=(0,1)),
-            #tfkl.RandomTranslation(0.2,0.2),
+            tfkl.RandomBrightness(0.2, value_range=(0,1)),
+            tfkl.RandomTranslation(0.2,0.2),
             #tfkl.RandomContrast(0.75),
+            tfkl.RandomContrast(0.2),
             tfkl.RandomZoom(0.2),
             tfkl.RandomFlip("horizontal"),
         ], name='preprocessing')
@@ -231,7 +232,8 @@ def train_model():
         # Preprocessing Layer
         preprocessing = preprocessing(input_layer)
 
-        x = tfkl.Conv2D(filters=32, kernel_size=3, padding='same', name='conv0')(input_layer)
+        # Convolutional Neural Network
+        x = tfkl.Conv2D(filters=32, kernel_size=3, padding='same', name='conv0')(preprocessing)
         x = tfkl.ReLU(name='relu0')(x)
         x = tfkl.MaxPooling2D(name='mp0')(x)
 
@@ -260,7 +262,7 @@ def train_model():
         model = tfk.Model(inputs=input_layer, outputs=output_layer, name='CNN')
 
         # Compile the model
-        model.compile(loss=tfk.losses.CategoricalCrossentropy(), optimizer=tfk.optimizers.Adam(), metrics=['accuracy'])
+        model.compile(loss=tfk.losses.CategoricalCrossentropy(), optimizer=tfk.optimizers.Adam(1e-4), metrics=['accuracy'])
 
         # Return the model
         return model
