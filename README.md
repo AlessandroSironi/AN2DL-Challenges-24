@@ -25,7 +25,8 @@ python3 -m jupytext --to notebook model.py
 | CNN_2_Dropout_Sanitized      | 0.6200   | 0.5000    | 0.5526 | 0.5250   |
 | CNN_3_Preprocessing          | 0.4200   | 0.3913    | 0.9473 | 0.5538   |
 | CNN_3_Preprocessing_2        | 0.0000   | 0.0000    | 0.0000 | 0.0000   |
-| CNN_4_Preprocessing_2        | 0.4100   | 0.3917    | 1.0000 | 0.5629   |
+| CNN_4_Preprocessing_3        | 0.4100   | 0.3917    | 1.0000 | 0.5629   |
+| CNN_4_Preprocessing_4        | 0.4200   | 0.3936    | 0.9736 | 0.5606   |
 
 ## 03/11/2023 - CNN_1
 CNN_1 -> copy/paste from Labs to make it work.
@@ -37,5 +38,7 @@ Added dropout layer, but made things worse. Sanitized version works best, but pr
 Aggressive preprocessing made things worse. 
 Attempt _2 for a more balanced workflow. WAS NOT SUBMITTED
 
-## 07/11/2023 - CNN_4_Preprocessing_2
+## 07/11/2023 - CNN_4_Preprocessing_2-4
 Attempt at preprocessing gone wrong, AGAIN >:(
+My life is sad AF regarding all aspects of my life. 
+
