@@ -44,7 +44,7 @@ from sklearn.preprocessing import LabelEncoder
 
 print("Finished loading libraries")
 
-model_name = "CNN_4_MobileNetV3Large"
+model_name = "CNN_5_MobileNetV2_FT"
 
 class model:
     def __init__(self, path):
@@ -116,202 +116,6 @@ def plot_results(history):
 
     plt.show()
     
-def train_model():
-    print("Training model ", model_name, "...")
-    # Load images from the .npz file
-    data_path = 'public_data.npz'
-    data = np.load(data_path, allow_pickle=True)
-
-    images = data['data']
-    labels = data['labels']
-
-    i = 0
-    for image in images: 
-        # Normalize image pixel values to a float range [0, 1]
-        images[i] = (images[i] / 255).astype(np.float32)
-        # Convert image from BGR to RGB
-        images[i] = images[i][...,::-1]
-        i = i+1
-        if (i % 1000 == 0):
-            print("Processing image: ", i)
-    print("Finished processing images")
-
-    # ------------------------------------------
-    # Sanitize input
-    # Delete trolololol and shrek
-    positions_to_remove = [58, 95, 137, 138, 171, 207, 338, 412, 434, 486, 506, 529, 571, 
-                           599, 622, 658, 692, 701, 723, 725, 753, 779, 783, 827, 840, 880, 
-                           898, 901, 961, 971, 974, 989, 1028, 1044, 1064, 1065, 1101, 1149, 
-                           1172, 1190, 1191, 1265, 1268, 1280, 1333, 1384, 1443, 1466, 1483, 
-                           1528, 1541, 1554, 1594, 1609, 1630, 1651, 1690, 1697, 1752, 1757,
-                           1759, 1806, 1828, 1866, 1903, 1938, 1939, 1977, 1981, 1988, 2022, 
-                           2081, 2090, 2150, 2191, 2192, 2198, 2261, 2311, 2328, 2348, 2380, 
-                           2426, 2435, 2451, 2453, 2487, 2496, 2515, 2564, 2581, 2593, 2596, 
-                           2663, 2665, 2675, 2676, 2727, 2734, 2736, 2755, 2779, 2796, 2800, 
-                           2830, 2831, 2839, 2864, 2866, 2889, 2913, 2929, 2937, 3033, 3049, 
-                           3055, 2086, 3105, 3108, 3144, 3155, 3286, 3376, 3410, 3436, 3451,
-                           3488, 3490, 3572, 3583, 3666, 3688, 3700, 3740, 3770, 3800, 3801, 
-                           3802, 3806, 3811, 3821, 3835, 3862, 3885, 3896, 3899, 3904, 3927, 
-                           3931, 3946, 3950, 3964, 3988, 3989, 4049, 4055, 4097, 4100, 4118, 
-                           4144, 4150, 4282, 4310, 4314, 4316, 4368, 4411, 4475, 4476, 4503,
-                           4507, 4557, 4605, 4618, 4694, 4719, 4735, 4740, 4766, 4779, 4837,
-                           4848, 4857, 4860, 4883, 4897, 4903, 4907, 4927, 5048, 5080, 5082, 
-                           5121, 5143, 5165, 5171]
-    print("Len of positions_to_remove: ", len(positions_to_remove))
-    n = 0
-    for pos in positions_to_remove:
-        new_pos = pos - n
-        print("Removing image at position: ", pos, " - New Position is ", new_pos)
-        images = np.delete(images, new_pos, axis=0)
-        labels = np.delete(labels, new_pos, axis=0)
-        n = n + 1
-
-    # ------------------------------------------
-
-    labels = np.array(labels) #TODO: Check if needed
-
-    labels = LabelEncoder().fit_transform(labels)
-    labels = tfk.utils.to_categorical(labels,len(np.unique(labels)))
-
-    # Use the stratify option to maintain the class distribution in the train and test datasets
-    images_train, images_test, labels_train, labels_test = train_test_split(images, labels, test_size=0.2, stratify=np.argmax(labels, axis=1), random_state=seed)
-
-    # Further split the test set into test and validation sets, stratifying the labels
-    images_test, images_val, labels_test, labels_val = train_test_split(images_test, labels_test, test_size=0.5, stratify=np.argmax(labels_test, axis=1), random_state=seed)
-
-    print("\n\nSHAPES OF THE SETS:\n")
-
-    print(f"images_train shape: {images_train.shape}, labels_train shape: {labels_train.shape}")
-    print(f"images_val shape: {images_val.shape}, labels_val shape: {labels_val.shape}")
-    print(f"images_test shape: {images_test.shape}, labels_test shape: {labels_test.shape}")
-
-    print("\n\n")
-
-    # ------------------------------------------
-    # Define input shape, output shape, batch size, and number of epochs
-    input_shape = images_train.shape[1:]
-    output_shape = labels_train.shape[1:]
-    batch_size = 32
-    epochs = 1000
-
-    # Print input shape, batch size, and number of epochs
-    #print(f"Input Shape: {input_shape}, Output Shape: {output_shape}, Batch Size: {batch_size}, Epochs: {epochs}")
-    # ------------------------------------------
-
-    callbacks = [
-        tfk.callbacks.EarlyStopping(monitor='val_accuracy', patience=100, restore_best_weights=True, mode='auto'),
-    ]
-
-    dropout_rate = 0.15
-
-    # INSERT AUGMENTATION HERE
-
-    def build_model(input_shape=input_shape, output_shape=output_shape, dropout_rate = dropout_rate):
-        tf.random.set_seed(seed)
-
-        #image augmentation
-        preprocessing = tf.keras.Sequential([
-        tfkl.RandomBrightness(0.2, value_range=(0,1)),
-        tfkl.RandomTranslation(0.2,0.2),
-        tfkl.RandomFlip("horizontal"),
-        ], name='preprocessing')
-
-        # Build the neural network layer by layer
-        input_layer = tfkl.Input(shape=input_shape, name='Input')
-        preprocessing = preprocessing(input_layer)
-
-
-        x = tfkl.Conv2D(filters=32, kernel_size=3, padding='same', name='conv0')(preprocessing)
-        x = tfkl.ReLU(name='relu0')(x)
-        x = tfkl.MaxPooling2D(name='mp0')(x)
-
-        x = tfkl.Conv2D(filters=64, kernel_size=3, padding='same', name='conv1')(x)
-        x = tfkl.ReLU(name='relu1')(x)
-        x = tfkl.MaxPooling2D(name='mp1')(x)
-
-        x = tfkl.Conv2D(filters=128, kernel_size=3, padding='same', name='conv2')(x)
-        x = tfkl.ReLU(name='relu2')(x)
-        x = tfkl.MaxPooling2D(name='mp2')(x)
-
-        x = tfkl.Conv2D(filters=256, kernel_size=3, padding='same', name='conv3')(x)
-        x = tfkl.ReLU(name='relu3')(x)
-        x = tfkl.MaxPooling2D(name='mp3')(x)
-
-        x = tfkl.Conv2D(filters=512, kernel_size=3, padding='same', name='conv4')(x)
-        x = tfkl.ReLU(name='relu4')(x)
-
-        x = tfkl.GlobalAveragePooling2D(name='gap')(x)
-
-        x = tfkl.Dropout(rate=dropout_rate, name='dropout')(x)
-
-        output_layer = tfkl.Dense(units=2, activation='softmax',name='Output')(x)
-
-        # Connect input and output through the Model class
-        model = tfk.Model(inputs=input_layer, outputs=output_layer, name='CNN')
-
-        # Compile the model
-        model.compile(loss=tfk.losses.CategoricalCrossentropy(), optimizer=tfk.optimizers.Adam(), metrics=['accuracy'])
-
-        # Return the model
-        return model
-            
-    model = build_model()
-    model.summary()
-    #tfk.utils.plot_model(model, expand_nested=True, show_shapes=True)
-
-    # Train the model
-    history = model.fit(
-        x = images_train,
-        y = labels_train,
-        batch_size = batch_size,
-        epochs = epochs,
-        validation_data = (images_val, labels_val),
-        callbacks = callbacks
-    ).history
-
-    model.save(model_name)
-
-    # ------------------------------------------
-    plot_result = True
-    if plot_result:
-        plot_results(history)
-    # ------------------------------------------
-
-    evaluate = True
-    if evaluate:
-        # Evaluate the model on the test set
-        # Copilot generated version:
-        # test_loss, test_acc = model.evaluate(images_test, labels_test, verbose=2)
-
-        # Notebooks version:
-        # Predict labels for the entire test set
-        predictions = model.predict(images_test, verbose=0)
-
-        # Display the shape of the predictions
-        print("Predictions Shape:", predictions.shape)
-
-        # Compute the confusion matrix
-        cm = confusion_matrix(np.argmax(labels_test, axis=-1), np.argmax(predictions, axis=-1))
-
-        # Compute classification metrics
-        accuracy = accuracy_score(np.argmax(labels_test, axis=-1), np.argmax(predictions, axis=-1))
-        precision = precision_score(np.argmax(labels_test, axis=-1), np.argmax(predictions, axis=-1), average='macro')
-        recall = recall_score(np.argmax(labels_test, axis=-1), np.argmax(predictions, axis=-1), average='macro')
-        f1 = f1_score(np.argmax(labels_test, axis=-1), np.argmax(predictions, axis=-1), average='macro')
-
-        # Display the computed metrics
-        print('Accuracy:', accuracy.round(4))
-        print('Precision:', precision.round(4))
-        print('Recall:', recall.round(4))
-        print('F1:', f1.round(4))
-
-        print("\n0:Healthy, 1:Unhealthy\n")
-        # Plot the confusion matrix
-        plt.figure(figsize=(10, 8))
-        sns.heatmap(cm.T, annot=True, xticklabels=np.unique(labels_test), yticklabels=np.unique(labels_test), cmap='Blues')
-        plt.xlabel('True labels')
-        plt.ylabel('Predicted labels')
-        plt.show()
 
 def train_model_mobile():
     print("Training model with mobileNet...")
@@ -396,18 +200,11 @@ def train_model_mobile():
         pooling='avg',
     ) """
 
-    mobile = tf.keras.applications.MobileNetV3Large(
-        input_shape=None,
-        alpha=1.0,
-        minimalistic=False,
-        include_top=True,
+    mobile = tfk.applications.MobileNetV2(
+        input_shape=(96, 96, 3),
+        include_top=False,
         weights="imagenet",
-        input_tensor=None,
-        classes=1000,
-        pooling=None,
-        dropout_rate=0.2,
-        classifier_activation="softmax",
-        include_preprocessing=True,
+        pooling='avg',
     )
     #tfk.utils.plot_model(mobile, show_shapes=True)
     # Use the supernet as feature extractor, i.e. freeze all its weigths
@@ -417,18 +214,20 @@ def train_model_mobile():
     inputs = tfk.Input(shape=(96, 96, 3))
 
     preprocessing = tf.keras.Sequential([
-            #tfkl.RandomBrightness(0.2, value_range=(0,1)),
+            tfkl.RandomBrightness(0.2, value_range=(0,1)),
             #tfkl.RandomTranslation(0.2,0.2),
             #tfkl.RandomContrast(0.75),
             tfkl.RandomZoom(0.2),
             tfkl.RandomFlip("horizontal"),
+            tfkl.RandomRotation(0.2),
         ], name='preprocessing')
     
     preprocessing = preprocessing(inputs)
     # Connect MobileNetV2 to the input
 
-    #x = mobile(preprocessing)
-    x = mobile(inputs)
+    x = mobile(preprocessing)
+    #x = mobile(inputs)
+
     # Add a Dense layer with 2 units and softmax activation as the classifier
     outputs = tfkl.Dense(2, activation='softmax')(x)
 
@@ -437,9 +236,6 @@ def train_model_mobile():
 
     # Compile the model with Categorical Cross-Entropy loss and Adam optimizer
     tl_model.compile(loss=tfk.losses.CategoricalCrossentropy(), optimizer=tfk.optimizers.Adam(), metrics=['accuracy'])
-
-    # Display model summary
-    #tl_model.summary()
 
     # Display model summary
     tl_model.summary()
@@ -462,18 +258,17 @@ def train_model_mobile():
     ft_model.summary()
 
     # Set all MobileNetV2 layers as trainable
-    ft_model.get_layer('mobilenet_v3_large_1.0_224').trainable = True
-    for i, layer in enumerate(ft_model.get_layer('mobilenet_v3_large_1.0_224').layers):
+    ft_model.get_layer('mobilenetv2_1.00_96').trainable = True
+    for i, layer in enumerate(ft_model.get_layer('mobilenetv2_1.00_96').layers):
         print(i, layer.name, layer.trainable)
 
     # Freeze first N layers, e.g., until the 133rd one
     N = 133
-    for i, layer in enumerate(ft_model.get_layer('mobilenet_v3_large_1.0_224').layers[:N]):
+    for i, layer in enumerate(ft_model.get_layer('mobilenetv2_1.00_96').layers[:N]):
         layer.trainable=False
-    for i, layer in enumerate(ft_model.get_layer('mobilenet_v3_large_1.0_224').layers):
+    for i, layer in enumerate(ft_model.get_layer('mobilenetv2_1.00_96').layers):
         print(i, layer.name, layer.trainable)
     ft_model.summary()
-
     # Compile the model
     ft_model.compile(loss=tfk.losses.BinaryCrossentropy(), optimizer=tfk.optimizers.Adam(1e-5), metrics='accuracy')
 
@@ -491,6 +286,7 @@ def train_model_mobile():
     plot_result = True
     if plot_result:
         plot_results(ft_history)
+        #plot_results(tl_history)
     # ------------------------------------------
 
     evaluate = True

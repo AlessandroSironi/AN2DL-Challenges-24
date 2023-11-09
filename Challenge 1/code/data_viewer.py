@@ -12,7 +12,7 @@ for image in images:
     # Normalize image pixel values to a float range [0, 1]
     images[i] = (images[i] / 255).astype(np.float32)
     # Convert image from BGR to RGB
-    images[i] = images[i][...,::-1]
+    #images[i] = images[i][...,::-1]
     i = i+1
     if (i % 500 == 0):
         print("Processing image: ", i, "\n")
