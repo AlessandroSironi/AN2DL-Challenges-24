@@ -24,6 +24,7 @@ random.seed(seed)
 import tensorflow as tf
 from tensorflow import keras as tfk
 from tensorflow.keras import layers as tfkl
+from tensorflow.keras.applications.mobilenet import preprocess_input
 tf.autograph.set_verbosity(0)
 tf.get_logger().setLevel(logging.ERROR)
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
@@ -43,29 +44,19 @@ from sklearn.preprocessing import LabelEncoder
 
 print("Finished loading libraries")
 
-model_name = "CNN_5_GAP_3.keras"
-
-print("[!] Model name: ", model_name)
+model_name = "CNN_6_efficientNet_2"
 
 class model:
     def __init__(self, path):
         self.model = tf.keras.models.load_model(os.path.join(path, model_name))
 
-    def binary(self, n):
-        if n > 0.5:
-            n = 1
-        else:
-            n = 0
-        return n
-
     def predict(self, X):
         
         # Note: this is just an example.
         # Here the model.predict is called, followed by the argmax
-        X = X / 255
         out = self.model.predict(X)
-        out = np.array(list(map(self.binary, out)))
-        out = tf.convert_to_tensor(out)  # Shape [BS]
+        out = tf.argmax(out, axis=-1)  # Shape [BS]
+
         return out
     
 
@@ -125,8 +116,9 @@ def plot_results(history):
 
     plt.show()
     
-def train_model():
-    print("Training model...")
+
+def train_model_mobile():
+    print("Training model with efficientNet...")
     # Load images from the .npz file
     data_path = 'public_data.npz'
     data = np.load(data_path, allow_pickle=True)
@@ -134,16 +126,19 @@ def train_model():
     images = data['data']
     labels = data['labels']
 
-    i = 0
+    """ i = 0
     for image in images: 
         # Normalize image pixel values to a float range [0, 1]
-        images[i] = (images[i] / 255).astype(np.float32)
+        #images[i] = (images[i] / 255).astype(np.float32)
+        
         # Convert image from BGR to RGB
         #images[i] = images[i][...,::-1]
         i = i+1
         if (i % 1000 == 0):
             print("Processing image: ", i)
-    print("Finished processing images")
+    print("Finished processing images") """
+
+    images = (images).astype(np.float32)
 
     # ------------------------------------------
     # Sanitize input
@@ -168,27 +163,26 @@ def train_model():
                            5121, 5143, 5165, 5171]
     print("Len of positions_to_remove: ", len(positions_to_remove))
     n = 0
+    
     for pos in positions_to_remove:
         new_pos = pos - n
-        print("Removing image at position: ", pos, " - New Position is ", new_pos)
+        #print("Removing image at position: ", pos, " - New Position is ", new_pos)
         images = np.delete(images, new_pos, axis=0)
         labels = np.delete(labels, new_pos, axis=0)
         n = n + 1
 
     # ------------------------------------------
-    #lables is an array [healthy, unhealty, ...]
-    labels = np.array(labels)
 
-    #now lables is an array [0, 1, ...]
+    labels = np.array(labels) #TODO: Check if needed
+
     labels = LabelEncoder().fit_transform(labels)
+    labels = tfk.utils.to_categorical(labels,len(np.unique(labels)))
 
-    #labels = np.reshape(labels, (labels.shape[0],1))
-    
     # Use the stratify option to maintain the class distribution in the train and test datasets
-    images_train, images_test, labels_train, labels_test = train_test_split(images, labels, test_size=0.2, random_state=seed)
+    images_train, images_test, labels_train, labels_test = train_test_split(images, labels, test_size=0.2, stratify=np.argmax(labels, axis=1), random_state=seed)
 
     # Further split the test set into test and validation sets, stratifying the labels
-    images_test, images_val, labels_test, labels_val = train_test_split(images_test, labels_test, test_size=0.5, random_state=seed)
+    images_test, images_val, labels_test, labels_val = train_test_split(images_test, labels_test, test_size=0.5, stratify=np.argmax(labels_test, axis=1), random_state=seed)
 
     print("\n\nSHAPES OF THE SETS:\n")
 
@@ -198,115 +192,136 @@ def train_model():
 
     print("\n\n")
 
-    # ------------------------------------------
-    # Define input shape, output shape, batch size, and number of epochs
     input_shape = images_train.shape[1:]
     output_shape = labels_train.shape[1:]
 
-    batch_size = 32
-    epochs = 1000
-
-    # Print input shape, batch size, and number of epochs
+    # ------------------------------------------
+    #Print input shape, batch size, and number of epochs
     #print(f"Input Shape: {input_shape}, Output Shape: {output_shape}, Batch Size: {batch_size}, Epochs: {epochs}")
     # ------------------------------------------
 
-    callbacks = [
-        tfk.callbacks.EarlyStopping(monitor='val_accuracy', patience=100, restore_best_weights=True, mode='auto'),
-    ]
+    efficientNet = tf.keras.applications.EfficientNetV2M(
+        include_top=False,
+        weights="imagenet",
+        input_shape=input_shape,
+        pooling="avg",
+        include_preprocessing=True,
+    )
 
-    def build_model(input_shape=input_shape):
-        tf.random.set_seed(seed)
+    """mobile = tf.keras.applications.MobileNetV3Large(
+        input_shape=None,
+        alpha=1.0,
+        minimalistic=False,
+        include_top=True,
+        weights="imagenet",
+        input_tensor=None,
+        classes=1000,
+        pooling=None,
+        dropout_rate=0.2,
+        classifier_activation="softmax",
+        include_preprocessing=True,
+    )"""
+    
+    #tfk.utils.plot_model(mobile, show_shapes=True)
+    # Use the supernet as feature extractor, i.e. freeze all its weigths
+    efficientNet.trainable = False
 
-         # Augmentation
-        preprocessing = tf.keras.Sequential([
+    # Create an input layer with shape (224, 224, 3)
+    inputs = tfk.Input(shape=(96, 96, 3))
+
+    augmentation = tf.keras.Sequential([
             #tfkl.RandomBrightness(0.2, value_range=(0,1)),
-            tfkl.RandomTranslation(0.2,0.2),
+            #tfkl.RandomTranslation(0.2,0.2),
             #tfkl.RandomContrast(0.75),
-            #tfkl.RandomContrast(0.2),
-            #tfkl.RandomZoom(0.2),
+            tfkl.RandomZoom(0.2),
             tfkl.RandomFlip("horizontal"),
         ], name='preprocessing')
-
-        """ preprocessing = tf.keras.Sequential([
-            tfkl.RandomBrightness(0.15, value_range=(0,1)),
-            tfkl.RandomTranslation(0.15,0.15),
-            tfkl.RandomContrast(0.15),
-            tfkl.RandomZoom(0.15),
-            tfkl.RandomFlip("horizontal"),
-        ], name='preprocessing') """
-
-        # Build the neural network layer by layer
-        input_layer = tfkl.Input(shape=input_shape, name='Input')
-
-        #reshape = tfkl.Reshape((64,64,1))(input_layer)
-
-        conv1 = tfkl.Conv2D(
-            filters = 32,
-            kernel_size = (3,3),
-            activation = 'relu',
-            name = 'conv1'
-        )(input_layer)
-        pool1 = tfkl.MaxPooling2D(name='pool1')(conv1)
-
-        conv2 = tfkl.Conv2D(
-            filters = 64,
-            kernel_size = (3,3),
-            activation = 'relu',
-            name = 'conv2'
-        )(pool1)
-        pool2 = tfkl.MaxPooling2D(name='pool2')(conv2)
-
-        conv3 = tfkl.Conv2D(
-            filters = 128,
-            kernel_size = (3,3),
-            activation = 'relu',
-            name = 'conv3'
-        )(pool2)
-        gpool = tfkl.GlobalAveragePooling2D(name='gpooling')(conv3)
-
-
-        filters_dropout = tfkl.Dropout(.3, seed=seed, name='dropout1')(gpool)
-        classifier = tfkl.Dense(
-            64, 
-            activation='relu', 
-            name='classifier'
-        )(filters_dropout)
-        classifier_dropout = tfkl.Dropout(.3, seed=seed, name='dropout2')(classifier)
-        output_layer = tfkl.Dense(
-            1, 
-            activation='sigmoid', 
-            name='Output'
-        )(classifier_dropout)
-
-        # Connect input and output through the Model class
-        model = tfk.Model(inputs=input_layer, outputs=output_layer, name='model')
-
-        # Compile the model
-        model.compile(loss='binary_crossentropy', optimizer=tfk.optimizers.Adam(), metrics='accuracy')
-        
-        # Return the model
-        return model
     
-    model = build_model()
-    model.summary()
-    #tfk.utils.plot_model(model, expand_nested=True, show_shapes=True)
+    augmentation = augmentation(inputs)
 
+    scale_layer = tfkl.Rescaling(scale = 1/127.5, offset = -1)
+    x = scale_layer(inputs)
+
+    #x = mobile(augmentation)
+    x = efficientNet(x)
+
+    """ x = tfkl.Conv2D (
+        filters = 128,
+        kernel_size = (3,3),
+        activation = 'relu',
+        name = 'Conv2D_1'
+    ) (x) """
+
+    #x = tfkl.GlobalAveragePooling2D()(x)
+
+    x = tfkl.Dropout(0.2)(x)
+    
+    outputs = tfkl.Dense(
+            2, 
+            activation='softmax', 
+            name='Output'
+        )(x)
+
+
+    # Create a Model connecting input and output
+    tl_model = tfk.Model(inputs=inputs, outputs=outputs, name='model')
+
+    # Compile the model with Categorical Cross-Entropy loss and Adam optimizer
+    tl_model.compile(loss=tfk.losses.CategoricalCrossentropy(), optimizer=tfk.optimizers.Adam(), metrics=['accuracy'])
+
+    # Display model summary
+    tl_model.summary()
     # Train the model
-    history = model.fit(
-        x = images_train,
+    tl_history = tl_model.fit(
+        x = preprocess_input(images_train*255), # We need to apply the preprocessing thought for the MobileNetV2 network
         y = labels_train,
-        batch_size = batch_size,
-        epochs = epochs,
-        validation_data = (images_val, labels_val),
-        callbacks = callbacks
+        batch_size = 32,
+        epochs = 1000,
+        validation_data = (preprocess_input(images_val*255), labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
+        callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=20, restore_best_weights=True)]
     ).history
 
-    model.save(model_name)
+    # Save the best model
+    tl_model.save('TransferLearningModel')
+    del tl_model
+
+    # Re-load the model after transfer learning
+    ft_model = tfk.models.load_model('TransferLearningModel')
+    ft_model.summary()
+
+    # Set all MobileNetV2 layers as trainable
+    ft_model.get_layer('efficientnetv2-m').trainable = True
+    #for i, layer in enumerate(ft_model.get_layer('mobilenetv2_1.00_96').layers):
+    #    print(i, layer.name, layer.trainable)
+
+    # Freeze first N layers, e.g., until the 133rd one
+    N = 133
+    for i, layer in enumerate(ft_model.get_layer('efficientnetv2-m').layers[:N]):
+        layer.trainable=False
+    #for i, layer in enumerate(ft_model.get_layer('mobilenetv2_1.00_96').layers):
+    #    print(i, layer.name, layer.trainable)
+    ft_model.summary()
+
+    # Compile the model
+    ft_model.compile(loss=tfk.losses.BinaryCrossentropy(), optimizer=tfk.optimizers.Adam(1e-5), metrics='accuracy')
+
+    # Fine-tune the model
+    ft_history = ft_model.fit(
+        x = preprocess_input(images_train*255), # We need to apply the preprocessing thought for the MobileNetV2 network
+        y = labels_train,
+        batch_size = 32,
+        epochs = 1000,
+        validation_data = (preprocess_input(images_val*255), labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
+        callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=20, restore_best_weights=True)]
+    ).history
+
+    # Save the model
+    ft_model.save(model_name)
 
     # ------------------------------------------
     plot_result = True
     if plot_result:
-        plot_results(history)
+        plot_results(ft_history)
     # ------------------------------------------
 
     evaluate = True
@@ -317,7 +332,7 @@ def train_model():
 
         # Notebooks version:
         # Predict labels for the entire test set
-        predictions = model.predict(images_test, verbose=0)
+        predictions = ft_model.predict(preprocess_input(images_test*255), verbose=0)
 
         # Display the shape of the predictions
         print("Predictions Shape:", predictions.shape)
@@ -349,7 +364,7 @@ def train_model():
 if __name__ == "__main__":
     train = True
     if (train):
-        train_model()
+        train_model_mobile()
     else:
         print("No training :(")
     #_model = model(os.getcwd())
