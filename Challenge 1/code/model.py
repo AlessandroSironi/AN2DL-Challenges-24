@@ -43,7 +43,7 @@ from sklearn.preprocessing import LabelEncoder
 
 print("Finished loading libraries")
 
-model_name = "CNN_4_Preprocessing_2"
+model_name = "CNN_5_GAP.keras"
 
 print("[!] Model name: ", model_name)
 
@@ -51,13 +51,21 @@ class model:
     def __init__(self, path):
         self.model = tf.keras.models.load_model(os.path.join(path, model_name))
 
+    def binary(self, n):
+        if n > 0.5:
+            n = 1
+        else:
+            n = 0
+        return n
+
     def predict(self, X):
         
         # Note: this is just an example.
         # Here the model.predict is called, followed by the argmax
+        X = X / 255
         out = self.model.predict(X)
-        out = tf.argmax(out, axis=-1)  # Shape [BS]
-
+        out = np.array(list(map(self.binary, out)))
+        out = tf.convert_to_tensor(out)  # Shape [BS]
         return out
     
 
@@ -131,7 +139,7 @@ def train_model():
         # Normalize image pixel values to a float range [0, 1]
         images[i] = (images[i] / 255).astype(np.float32)
         # Convert image from BGR to RGB
-        images[i] = images[i][...,::-1]
+        #images[i] = images[i][...,::-1]
         i = i+1
         if (i % 1000 == 0):
             print("Processing image: ", i)
@@ -168,17 +176,19 @@ def train_model():
         n = n + 1
 
     # ------------------------------------------
+    #lables is an array [healthy, unhealty, ...]
+    labels = np.array(labels)
 
-    labels = np.array(labels) #TODO: Check if needed
-
+    #now lables is an array [0, 1, ...]
     labels = LabelEncoder().fit_transform(labels)
-    labels = tfk.utils.to_categorical(labels,len(np.unique(labels)))
 
+    #labels = np.reshape(labels, (labels.shape[0],1))
+    
     # Use the stratify option to maintain the class distribution in the train and test datasets
-    images_train, images_test, labels_train, labels_test = train_test_split(images, labels, test_size=0.2, stratify=np.argmax(labels, axis=1), random_state=seed)
+    images_train, images_test, labels_train, labels_test = train_test_split(images, labels, test_size=0.2, random_state=seed)
 
     # Further split the test set into test and validation sets, stratifying the labels
-    images_test, images_val, labels_test, labels_val = train_test_split(images_test, labels_test, test_size=0.5, stratify=np.argmax(labels_test, axis=1), random_state=seed)
+    images_test, images_val, labels_test, labels_val = train_test_split(images_test, labels_test, test_size=0.5, random_state=seed)
 
     print("\n\nSHAPES OF THE SETS:\n")
 
@@ -192,6 +202,7 @@ def train_model():
     # Define input shape, output shape, batch size, and number of epochs
     input_shape = images_train.shape[1:]
     output_shape = labels_train.shape[1:]
+
     batch_size = 32
     epochs = 1000
 
@@ -203,18 +214,16 @@ def train_model():
         tfk.callbacks.EarlyStopping(monitor='val_accuracy', patience=100, restore_best_weights=True, mode='auto'),
     ]
 
-    dropout_rate = 0.15
-
-    def build_model(input_shape=input_shape, output_shape=output_shape, dropout_rate = dropout_rate):
+    def build_model(input_shape=input_shape):
         tf.random.set_seed(seed)
 
          # Augmentation
         preprocessing = tf.keras.Sequential([
-            tfkl.RandomBrightness(0.2, value_range=(0,1)),
+            #tfkl.RandomBrightness(0.2, value_range=(0,1)),
             tfkl.RandomTranslation(0.2,0.2),
             #tfkl.RandomContrast(0.75),
-            tfkl.RandomContrast(0.2),
-            tfkl.RandomZoom(0.2),
+            #tfkl.RandomContrast(0.2),
+            #tfkl.RandomZoom(0.2),
             tfkl.RandomFlip("horizontal"),
         ], name='preprocessing')
 
@@ -229,41 +238,52 @@ def train_model():
         # Build the neural network layer by layer
         input_layer = tfkl.Input(shape=input_shape, name='Input')
 
-        # Preprocessing Layer
-        preprocessing = preprocessing(input_layer)
+        #reshape = tfkl.Reshape((64,64,1))(input_layer)
 
-        # Convolutional Neural Network
-        x = tfkl.Conv2D(filters=32, kernel_size=3, padding='same', name='conv0')(preprocessing)
-        x = tfkl.ReLU(name='relu0')(x)
-        x = tfkl.MaxPooling2D(name='mp0')(x)
+        conv1 = tfkl.Conv2D(
+            filters = 32,
+            kernel_size = (3,3),
+            activation = 'relu',
+            name = 'conv1'
+        )(input_layer)
+        pool1 = tfkl.MaxPooling2D(name='pool1')(conv1)
 
-        x = tfkl.Conv2D(filters=64, kernel_size=3, padding='same', name='conv1')(x)
-        x = tfkl.ReLU(name='relu1')(x)
-        x = tfkl.MaxPooling2D(name='mp1')(x)
+        conv2 = tfkl.Conv2D(
+            filters = 64,
+            kernel_size = (3,3),
+            activation = 'relu',
+            name = 'conv2'
+        )(pool1)
+        pool2 = tfkl.MaxPooling2D(name='pool2')(conv2)
 
-        x = tfkl.Conv2D(filters=128, kernel_size=3, padding='same', name='conv2')(x)
-        x = tfkl.ReLU(name='relu2')(x)
-        x = tfkl.MaxPooling2D(name='mp2')(x)
+        conv3 = tfkl.Conv2D(
+            filters = 128,
+            kernel_size = (3,3),
+            activation = 'relu',
+            name = 'conv3'
+        )(pool2)
+        gpool = tfkl.GlobalAveragePooling2D(name='gpooling')(conv3)
 
-        x = tfkl.Conv2D(filters=256, kernel_size=3, padding='same', name='conv3')(x)
-        x = tfkl.ReLU(name='relu3')(x)
-        x = tfkl.MaxPooling2D(name='mp3')(x)
 
-        x = tfkl.Conv2D(filters=512, kernel_size=3, padding='same', name='conv4')(x)
-        x = tfkl.ReLU(name='relu4')(x)
-
-        x = tfkl.GlobalAveragePooling2D(name='gap')(x)
-
-        x = tfkl.Dropout(rate=dropout_rate, name='dropout')(x)
-
-        output_layer = tfkl.Dense(units=2, activation='softmax',name='Output')(x)
+        filters_dropout = tfkl.Dropout(.3, seed=seed, name='dropout1')(gpool)
+        classifier = tfkl.Dense(
+            64, 
+            activation='relu', 
+            name='classifier'
+        )(filters_dropout)
+        classifier_dropout = tfkl.Dropout(.3, seed=seed, name='dropout2')(classifier)
+        output_layer = tfkl.Dense(
+            1, 
+            activation='sigmoid', 
+            name='Output'
+        )(classifier_dropout)
 
         # Connect input and output through the Model class
-        model = tfk.Model(inputs=input_layer, outputs=output_layer, name='CNN')
+        model = tfk.Model(inputs=input_layer, outputs=output_layer, name='model')
 
         # Compile the model
-        model.compile(loss=tfk.losses.CategoricalCrossentropy(), optimizer=tfk.optimizers.Adam(1e-4), metrics=['accuracy'])
-
+        model.compile(loss='binary_crossentropy', optimizer=tfk.optimizers.Adam(), metrics='accuracy')
+        
         # Return the model
         return model
     
