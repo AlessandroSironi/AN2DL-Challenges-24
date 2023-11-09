@@ -273,12 +273,12 @@ def train_model_mobile():
     tl_model.summary()
     # Train the model
     tl_history = tl_model.fit(
-        x = preprocess_input(images_train*255), # We need to apply the preprocessing thought for the MobileNetV2 network
+        x = preprocess_input(images_train), # We need to apply the preprocessing thought for the MobileNetV2 network
         y = labels_train,
         batch_size = 32,
         epochs = 1000,
-        validation_data = (preprocess_input(images_val*255), labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
-        callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=20, restore_best_weights=True)]
+        validation_data = (preprocess_input(images_val), labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
+        callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=100, restore_best_weights=True)]
     ).history
 
     # Save the best model
@@ -307,12 +307,12 @@ def train_model_mobile():
 
     # Fine-tune the model
     ft_history = ft_model.fit(
-        x = preprocess_input(images_train*255), # We need to apply the preprocessing thought for the MobileNetV2 network
+        x = preprocess_input(images_train), # We need to apply the preprocessing thought for the MobileNetV2 network
         y = labels_train,
         batch_size = 32,
         epochs = 1000,
-        validation_data = (preprocess_input(images_val*255), labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
-        callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=20, restore_best_weights=True)]
+        validation_data = (preprocess_input(images_val), labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
+        callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=100, restore_best_weights=True)]
     ).history
 
     # Save the model
