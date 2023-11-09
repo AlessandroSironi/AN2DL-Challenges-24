@@ -1,7 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from ipywidgets import interact, IntSlider
-import ipywidgets as widgets
 
 # Load the .npz file
 data = np.load('public_data.npz', allow_pickle=True)
@@ -78,138 +76,19 @@ if show_all_images:
     plt.ion()
     plt.show()
 else:
-    range_min = 0
-    range_max = 500
-    num_images = range_max - range_min
-    num_cols = int(np.ceil(np.sqrt(num_images)))    # Number of columns in the grid
-    num_rows = int(np.ceil(num_images / num_cols))    # Number of rows in the grid
-    for i in range(range_min, range_max):
-        plt.subplot(num_rows, num_cols, i+1 - range_min)
-        plt.imshow(images[i])
-        plt.axis('off')
-        plt.text(0, 0, f"Image {i}", fontsize=8, color='red')
-    plt.show()
-
-    range_min = 500
-    range_max = 1000
-    num_images = range_max - range_min
-    num_cols = int(np.ceil(np.sqrt(num_images)))    # Number of columns in the grid
-    num_rows = int(np.ceil(num_images / num_cols))    # Number of rows in the grid
-    for i in range(range_min, range_max):
-        plt.subplot(num_rows, num_cols, i+1 - range_min)
-        plt.imshow(images[i])
-        plt.axis('off')
-        plt.text(0, 0, f"Image {i}", fontsize=8, color='red')
-    plt.show()
-
-    range_min = 1000
-    range_max = 1500
-    num_images = range_max - range_min
-    num_cols = int(np.ceil(np.sqrt(num_images)))    # Number of columns in the grid
-    num_rows = int(np.ceil(num_images / num_cols))    # Number of rows in the grid
-    for i in range(range_min, range_max):
-        plt.subplot(num_rows, num_cols, i+1 - range_min)
-        plt.imshow(images[i])
-        plt.axis('off')
-        plt.text(0, 0, f"Image {i}", fontsize=8, color='red')
-    plt.show()
-
-    range_min = 1500
-    range_max = 2000
-    num_images = range_max - range_min
-    num_cols = int(np.ceil(np.sqrt(num_images)))    # Number of columns in the grid
-    num_rows = int(np.ceil(num_images / num_cols))    # Number of rows in the grid
-    for i in range(range_min, range_max):
-        plt.subplot(num_rows, num_cols, i+1 - range_min)
-        plt.imshow(images[i])
-        plt.axis('off')
-        plt.text(0, 0, f"Image {i}", fontsize=8, color='red')
-    plt.show()
-
-    range_min = 2000
-    range_max = 2500
-    num_images = range_max - range_min
-    num_cols = int(np.ceil(np.sqrt(num_images)))    # Number of columns in the grid
-    num_rows = int(np.ceil(num_images / num_cols))    # Number of rows in the grid
-    for i in range(range_min, range_max):
-        plt.subplot(num_rows, num_cols, i+1 - range_min)
-        plt.imshow(images[i])
-        plt.axis('off')
-        plt.text(0, 0, f"Image {i}", fontsize=8, color='red')
-    plt.show()
-
-    range_min = 2500
-    range_max = 3000
-    num_images = range_max - range_min
-    num_cols = int(np.ceil(np.sqrt(num_images)))    # Number of columns in the grid
-    num_rows = int(np.ceil(num_images / num_cols))    # Number of rows in the grid
-    for i in range(range_min, range_max):
-        plt.subplot(num_rows, num_cols, i+1 - range_min)
-        plt.imshow(images[i])
-        plt.axis('off')
-        plt.text(0, 0, f"Image {i}", fontsize=8, color='red')
-    plt.show()
-
-    range_min = 3000
-    range_max = 3500
-    num_images = range_max - range_min
-    num_cols = int(np.ceil(np.sqrt(num_images)))    # Number of columns in the grid
-    num_rows = int(np.ceil(num_images / num_cols))    # Number of rows in the grid
-    for i in range(range_min, range_max):
-        plt.subplot(num_rows, num_cols, i+1 - range_min)
-        plt.imshow(images[i])
-        plt.axis('off')
-        plt.text(0, 0, f"Image {i}", fontsize=8, color='red')
-    plt.show()
-
-    range_min = 3500
-    range_max = 4000
-    num_images = range_max - range_min
-    num_cols = int(np.ceil(np.sqrt(num_images)))    # Number of columns in the grid
-    num_rows = int(np.ceil(num_images / num_cols))    # Number of rows in the grid
-    for i in range(range_min, range_max):
-        plt.subplot(num_rows, num_cols, i+1 - range_min)
-        plt.imshow(images[i])
-        plt.axis('off')
-        plt.text(0, 0, f"Image {i}", fontsize=8, color='red')
-    plt.show()
-
-    range_min = 4000
-    range_max = 4500
-    num_images = range_max - range_min
-    num_cols = int(np.ceil(np.sqrt(num_images)))    # Number of columns in the grid
-    num_rows = int(np.ceil(num_images / num_cols))    # Number of rows in the grid
-    for i in range(range_min, range_max):
-        plt.subplot(num_rows, num_cols, i+1 - range_min)
-        plt.imshow(images[i])
-        plt.axis('off')
-        plt.text(0, 0, f"Image {i}", fontsize=8, color='red')
-    plt.show()
-
-    range_min = 4500
-    range_max = 5000
-    num_images = range_max - range_min
-    num_cols = int(np.ceil(np.sqrt(num_images)))    # Number of columns in the grid
-    num_rows = int(np.ceil(num_images / num_cols))    # Number of rows in the grid
-    for i in range(range_min, range_max):
-        plt.subplot(num_rows, num_cols, i+1 - range_min)
-        plt.imshow(images[i])
-        plt.axis('off')
-        plt.text(0, 0, f"Image {i}", fontsize=8, color='red')
-    plt.show()
-
-    range_min = 5000
-    range_max = len(images)
-    num_images = range_max - range_min
-    num_cols = int(np.ceil(np.sqrt(num_images)))    # Number of columns in the grid
-    num_rows = int(np.ceil(num_images / num_cols))    # Number of rows in the grid
-    for i in range(range_min, range_max):
-        plt.subplot(num_rows, num_cols, i+1 - range_min)
-        plt.imshow(images[i])
-        plt.axis('off')
-        plt.text(0, 0, f"Image {i}", fontsize=8, color='red')
-    plt.show()
-
+    steps = 100
+    counter = 0
+    num_total_images = len(images)
+    num_cols = int(np.ceil(np.sqrt(steps)))    # Number of columns in the grid
+    num_rows = int(np.ceil(steps / num_cols))    # Number of rows in the grid
+    while (counter < num_total_images):
+        for i in range (counter, counter + steps):
+            plt.subplot(num_rows, num_cols, i+1 - counter)
+            plt.imshow(images[i])
+            plt.axis('off')
+            plt.text(0, 0, f"{i} - {labels[i]}", fontsize=8, color='red')
+        counter = counter + steps
+        plt.show()
 
 for label in labels:
     print(label)
