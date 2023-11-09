@@ -126,7 +126,7 @@ def train_model_mobile():
     images = data['data']
     labels = data['labels']
 
-    i = 0
+    """ i = 0
     for image in images: 
         # Normalize image pixel values to a float range [0, 1]
         images[i] = (images[i] / 255).astype(np.float32)
@@ -135,7 +135,7 @@ def train_model_mobile():
         i = i+1
         if (i % 1000 == 0):
             print("Processing image: ", i)
-    print("Finished processing images")
+    print("Finished processing images") """
 
     # ------------------------------------------
     # Sanitize input

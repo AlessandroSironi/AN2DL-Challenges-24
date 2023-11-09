@@ -138,7 +138,7 @@ def train_model_mobile():
             print("Processing image: ", i)
     print("Finished processing images") """
 
-    images = (images).astype(np.float32)
+    #images = (images).astype(np.float32)
 
     # ------------------------------------------
     # Sanitize input
