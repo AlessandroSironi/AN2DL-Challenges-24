@@ -212,6 +212,9 @@ def train_model():
     network_keras_name = efficientNet.name
     print("[*] Network name: ", network_keras_name)
 
+    for i, layer in enumerate(efficientNet.layers):
+        print(i, layer.name, layer.trainable)
+
     """mobile = tf.keras.applications.MobileNetV3Large(
         input_shape=None,
         alpha=1.0,
@@ -302,10 +305,11 @@ def train_model():
     #    print(i, layer.name, layer.trainable)
 
     # Freeze first N layers, e.g., until the 133rd one
-    num_total_layers = len(ft_model.get_layer(network_keras_name).layers)
-    N = 40
-    num_layers_not_to_train = num_total_layers - N
-    for i, layer in enumerate(ft_model.get_layer(network_keras_name).layers[:num_layers_not_to_train]):
+    #num_total_layers = len(ft_model.get_layer(network_keras_name).layers)
+    N = 922
+    #num_layers_not_to_train = num_total_layers - N
+    #for i, layer in enumerate(ft_model.get_layer(network_keras_name).layers[:num_layers_not_to_train]):
+    for i, layer in enumerate(ft_model.get_layer(network_keras_name).layers[:N]):
         layer.trainable=False
     #for i, layer in enumerate(ft_model.get_layer(network_keras_name).layers):
     #    print(i, layer.name, layer.trainable)
