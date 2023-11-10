@@ -44,7 +44,7 @@ from sklearn.preprocessing import LabelEncoder
 
 print("[*] Finished loading libraries")
 
-model_name = "CNN_efficientNet_L_2"
+model_name = "CNN_efficientNet_L_3"
 
 class model:
     def __init__(self, path):
@@ -282,7 +282,7 @@ def train_model():
     tl_history = tl_model.fit(
         x = images_train, # We need to apply the preprocessing thought for the MobileNetV2 network
         y = labels_train,
-        batch_size = 32,
+        batch_size = 64,
         epochs = 1000,
         validation_data = (images_val, labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
         callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=100, restore_best_weights=True)]
@@ -303,7 +303,7 @@ def train_model():
 
     # Freeze first N layers, e.g., until the 133rd one
     num_total_layers = len(ft_model.get_layer(network_keras_name).layers)
-    N = 30
+    N = 40
     num_layers_not_to_train = num_total_layers - N
     for i, layer in enumerate(ft_model.get_layer(network_keras_name).layers[:num_layers_not_to_train]):
         layer.trainable=False
@@ -318,7 +318,7 @@ def train_model():
     ft_history = ft_model.fit(
         x = images_train, # We need to apply the preprocessing thought for the MobileNetV2 network
         y = labels_train,
-        batch_size = 32,
+        batch_size = 64,
         epochs = 1000,
         validation_data = (images_val, labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
         callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=100, restore_best_weights=True)]
