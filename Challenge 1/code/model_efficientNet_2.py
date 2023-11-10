@@ -306,8 +306,8 @@ def train_model():
     num_layers_not_to_train = num_total_layers - N
     for i, layer in enumerate(ft_model.get_layer(network_keras_name).layers[:num_layers_not_to_train]):
         layer.trainable=False
-    #for i, layer in enumerate(ft_model.get_layer(network_keras_name).layers):
-    #    print(i, layer.name, layer.trainable)
+    for i, layer in enumerate(ft_model.get_layer(network_keras_name).layers):
+        print(i, layer.name, layer.trainable)
     ft_model.summary()
 
     # Compile the model
@@ -324,6 +324,7 @@ def train_model():
     ).history
 
     # Save the model
+    print("Saving model...")
     ft_model.save(model_name)
 
     # ------------------------------------------
