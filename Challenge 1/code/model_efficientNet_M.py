@@ -44,7 +44,7 @@ from sklearn.preprocessing import LabelEncoder
 
 print("[*] Finished loading libraries")
 
-model_name = "CNN_efficientNet_L"
+model_name = "CNN_efficientNet_M"
 
 class model:
     def __init__(self, path):
