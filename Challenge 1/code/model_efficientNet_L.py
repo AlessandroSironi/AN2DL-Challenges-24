@@ -44,7 +44,7 @@ from sklearn.preprocessing import LabelEncoder
 
 print("[*] Finished loading libraries")
 
-model_name = "CNN_efficientNet_L"
+model_name = "CNN_efficientNet_L_2"
 
 class model:
     def __init__(self, path):
@@ -235,12 +235,13 @@ def train_model():
 
     augmentation = tf.keras.Sequential([
             #tfkl.RandomBrightness(0.2, value_range=(0,1)),
-            tfkl.RandomTranslation(0.15,0.15),
+            tfkl.RandomTranslation(0.2,0.2),
             #tfkl.RandomContrast(0.75),
-            # Set RandomBrightness to have an upper bound of 0.2
-            tfkl.RandomBrightness(0.1),
-            tfkl.RandomZoom(0.15),
+            tfkl.RandomBrightness(0.15),
+            tfkl.RandomZoom(0.2),
             tfkl.RandomFlip("horizontal"),
+            tfkl.RandomFlip("vertical"),
+            tfkl.RandomRotation(0.2),
         ], name='preprocessing')
     
     augmentation = augmentation(inputs)
@@ -302,7 +303,7 @@ def train_model():
 
     # Freeze first N layers, e.g., until the 133rd one
     num_total_layers = len(ft_model.get_layer(network_keras_name).layers)
-    N = 20
+    N = 30
     num_layers_not_to_train = num_total_layers - N
     for i, layer in enumerate(ft_model.get_layer(network_keras_name).layers[:num_layers_not_to_train]):
         layer.trainable=False
