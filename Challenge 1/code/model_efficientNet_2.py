@@ -137,7 +137,7 @@ def train_model_mobile():
         if (i % 1000 == 0):
             print("Processing image: ", i)
     print("Finished processing images") """
-
+    # EfficientNetV2 models expect their inputs to be float tensors of pixels with values in the [0-255] range.
     images = (images).astype(np.float32)
 
     # ------------------------------------------
@@ -173,7 +173,7 @@ def train_model_mobile():
 
     # ------------------------------------------
 
-    labels = np.array(labels) #TODO: Check if needed
+    labels = np.array(labels)
 
     labels = LabelEncoder().fit_transform(labels)
     labels = tfk.utils.to_categorical(labels,len(np.unique(labels)))
@@ -199,7 +199,7 @@ def train_model_mobile():
     #Print input shape, batch size, and number of epochs
     #print(f"Input Shape: {input_shape}, Output Shape: {output_shape}, Batch Size: {batch_size}, Epochs: {epochs}")
     # ------------------------------------------
-
+    #if include_preprocessing=True no preprocessing is needed
     efficientNet = tf.keras.applications.EfficientNetV2M(
         include_top=False,
         weights="imagenet",
@@ -239,11 +239,11 @@ def train_model_mobile():
     
     augmentation = augmentation(inputs)
 
-    scale_layer = tfkl.Rescaling(scale = 1/127.5, offset = -1)
-    x = scale_layer(inputs)
+    #scale_layer = tfkl.Rescaling(scale = 1/127.5, offset = -1)
+    #x = scale_layer(augmentation)
 
     #x = mobile(augmentation)
-    x = efficientNet(x)
+    x = efficientNet(augmentation)
 
     """ x = tfkl.Conv2D (
         filters = 128,
@@ -273,11 +273,11 @@ def train_model_mobile():
     tl_model.summary()
     # Train the model
     tl_history = tl_model.fit(
-        x = preprocess_input(images_train*255), # We need to apply the preprocessing thought for the MobileNetV2 network
+        x = images_train, # We need to apply the preprocessing thought for the MobileNetV2 network
         y = labels_train,
-        batch_size = 32,
-        epochs = 1000,
-        validation_data = (preprocess_input(images_val*255), labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
+        batch_size = 16,
+        epochs = 200,
+        validation_data = (images_val, labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
         callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=20, restore_best_weights=True)]
     ).history
 
@@ -307,11 +307,11 @@ def train_model_mobile():
 
     # Fine-tune the model
     ft_history = ft_model.fit(
-        x = preprocess_input(images_train*255), # We need to apply the preprocessing thought for the MobileNetV2 network
+        x = images_train, # We need to apply the preprocessing thought for the MobileNetV2 network
         y = labels_train,
-        batch_size = 32,
-        epochs = 1000,
-        validation_data = (preprocess_input(images_val*255), labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
+        batch_size = 16,
+        epochs = 200,
+        validation_data = (images_val, labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
         callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=20, restore_best_weights=True)]
     ).history
 
@@ -332,7 +332,7 @@ def train_model_mobile():
 
         # Notebooks version:
         # Predict labels for the entire test set
-        predictions = ft_model.predict(preprocess_input(images_test*255), verbose=0)
+        predictions = ft_model.predict(images_test, verbose=0)
 
         # Display the shape of the predictions
         print("Predictions Shape:", predictions.shape)
