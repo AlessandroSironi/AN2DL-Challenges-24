@@ -126,7 +126,7 @@ def train_model_mobile():
     images = data['data']
     labels = data['labels']
 
-    i = 0
+    """ i = 0
     for image in images: 
         # Normalize image pixel values to a float range [0, 1]
         images[i] = (images[i] / 255).astype(np.float32)
@@ -135,7 +135,7 @@ def train_model_mobile():
         i = i+1
         if (i % 1000 == 0):
             print("Processing image: ", i)
-    print("Finished processing images")
+    print("Finished processing images") """
 
     # ------------------------------------------
     # Sanitize input
@@ -259,11 +259,11 @@ def train_model_mobile():
     tl_model.summary()
     # Train the model
     tl_history = tl_model.fit(
-        x = preprocess_input(images_train*255), # We need to apply the preprocessing thought for the MobileNetV2 network
+        x = preprocess_input(images_train), # We need to apply the preprocessing thought for the MobileNetV2 network
         y = labels_train,
         batch_size = 32,
         epochs = 1000,
-        validation_data = (preprocess_input(images_val*255), labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
+        validation_data = (preprocess_input(images_val), labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
         callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=100, restore_best_weights=True)]
     ).history
 
@@ -293,11 +293,11 @@ def train_model_mobile():
 
     # Fine-tune the model
     ft_history = ft_model.fit(
-        x = preprocess_input(images_train*255), # We need to apply the preprocessing thought for the MobileNetV2 network
+        x = preprocess_input(images_train), # We need to apply the preprocessing thought for the MobileNetV2 network
         y = labels_train,
         batch_size = 32,
         epochs = 1000,
-        validation_data = (preprocess_input(images_val*255), labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
+        validation_data = (preprocess_input(images_val), labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
         callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=100, restore_best_weights=True)]
     ).history
 
