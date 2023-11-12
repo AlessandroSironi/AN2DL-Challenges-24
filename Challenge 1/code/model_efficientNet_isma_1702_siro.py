@@ -44,7 +44,7 @@ from sklearn.preprocessing import LabelEncoder
 
 print("Finished loading libraries")
 
-model_name = "model_efficientNet_isma_1702_revsiro"
+model_name = "model_efficientNet_isma_1702_revsiro_2"
 
 class model:
     def __init__(self, path):
@@ -179,10 +179,10 @@ def train_model():
     labels = tfk.utils.to_categorical(labels,len(np.unique(labels)))
 
     # Use the stratify option to maintain the class distribution in the train and test datasets
-    images_train, images_test, labels_train, labels_test = train_test_split(images, labels, test_size=0.2, stratify=np.argmax(labels, axis=1), random_state=seed)
+    images_train, images_test, labels_train, labels_test = train_test_split(images, labels, test_size=0.1, stratify=np.argmax(labels, axis=1), random_state=seed)
 
     # Further split the test set into test and validation sets, stratifying the labels
-    images_test, images_val, labels_test, labels_val = train_test_split(images_test, labels_test, test_size=0.5, stratify=np.argmax(labels_test, axis=1), random_state=seed)
+    images_test, images_val, labels_test, labels_val = train_test_split(images_test, labels_test, test_size=0.75, stratify=np.argmax(labels_test, axis=1), random_state=seed)
 
     print("\n\nSHAPES OF THE SETS:\n")
 
