@@ -44,7 +44,7 @@ from sklearn.preprocessing import LabelEncoder
 
 print("Finished loading libraries")
 
-model_name = "model_efficientNet_isma_1702_revsiro_2"
+model_name = "model_efficientNet_isma_1702_revsiro_3"
 
 class model:
     def __init__(self, path):
@@ -306,7 +306,8 @@ def train_model():
     #    print(i, layer.name, layer.trainable)
 
     # Freeze first N layers, e.g., until the 133rd one
-    N = 922
+    #N = 922 #Block 7
+    N = 549 # Block 6
     for i, layer in enumerate(ft_model.get_layer(network_keras_name).layers[:N]):
         layer.trainable=False
     for i, layer in enumerate(ft_model.get_layer(network_keras_name).layers):
