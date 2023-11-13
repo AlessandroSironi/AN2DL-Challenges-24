@@ -209,16 +209,16 @@ def train_model():
     ) """
 
     externalNet = tf.keras.applications.ConvNeXtLarge(
-    model_name="convnext_base",
-    include_top=False,
-    include_preprocessing=True,
-    weights="imagenet",
-    #input_tensor=None,
-    input_shape=input_shape,
-    pooling="avg",
-    #classes=1000,
-    #classifier_activation="softmax",
-)
+        model_name="convnext_large",
+        include_top=False,
+        include_preprocessing=True,
+        weights="imagenet",
+        #input_tensor=None,
+        input_shape=input_shape,
+        pooling="avg",
+        #classes=1000,
+        #classifier_activation="softmax",
+    )
 
     #Automatically get the name of the network
     network_keras_name = externalNet.name
