@@ -215,7 +215,7 @@ def train_model():
     weights="imagenet",
     #input_tensor=None,
     input_shape=input_shape,
-    pooling=None,
+    pooling="avg",
     #classes=1000,
     #classifier_activation="softmax",
 )
@@ -275,7 +275,7 @@ def train_model():
         name = 'Conv2D_1'
     ) (x) """
 
-    x = tfkl.GlobalAveragePooling2D()(x)
+    #x = tfkl.GlobalAveragePooling2D()(x)
 
     x = tfkl.Dropout(0.2)(x)
     
