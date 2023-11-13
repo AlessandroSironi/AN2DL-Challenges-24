@@ -44,7 +44,7 @@ from sklearn.preprocessing import LabelEncoder
 
 print("Finished loading libraries")
 
-model_name = "model_efficientNet_isma_1702_revsiro_3"
+model_name = "model_efficientNet_isma_1702_revsiro_4"
 
 class model:
     def __init__(self, path):
