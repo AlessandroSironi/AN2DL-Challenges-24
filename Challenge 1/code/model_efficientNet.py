@@ -267,8 +267,10 @@ def train_model():
 
     x = tfkl.Dropout(0.2)(x)
     
+    reg_strength = 0.01
     outputs = tfkl.Dense(
             2, 
+            kernel_regularizer=tfk.regularizers.l2(reg_strength),
             activation='softmax', 
             name='Output'
         )(x)
@@ -286,7 +288,7 @@ def train_model():
     tl_history = tl_model.fit(
         x = images_train, # We need to apply the preprocessing thought for the MobileNetV2 network
         y = labels_train,
-        batch_size = 16,
+        batch_size = 32,
         epochs = 1000,
         validation_data = (images_val, labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
         callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=100, restore_best_weights=True)]
@@ -306,8 +308,8 @@ def train_model():
     #    print(i, layer.name, layer.trainable)
 
     # Freeze first N layers, e.g., until the 133rd one
-    #N = 922 #Block 7
-    N = 549 # Block 6
+    N = 922 #Block 7
+    #N = 549 # Block 6
     for i, layer in enumerate(ft_model.get_layer(network_keras_name).layers[:N]):
         layer.trainable=False
     for i, layer in enumerate(ft_model.get_layer(network_keras_name).layers):
@@ -321,7 +323,7 @@ def train_model():
     ft_history = ft_model.fit(
         x = images_train, # We need to apply the preprocessing thought for the MobileNetV2 network
         y = labels_train,
-        batch_size = 16,
+        batch_size = 32,
         epochs = 1000,
         validation_data = (images_val, labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
         callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=100, restore_best_weights=True)]
