@@ -44,7 +44,7 @@ from sklearn.preprocessing import LabelEncoder
 
 print("Finished loading libraries")
 
-model_name = "model_ConNeXt_base"
+model_name = "model_ConNeXt_large"
 
 class model:
     def __init__(self, path):
@@ -208,7 +208,7 @@ def train_model():
         include_preprocessing=True,
     ) """
 
-    externalNet = tf.keras.applications.ConvNeXtBase(
+    externalNet = tf.keras.applications.ConvNeXtLarge(
     model_name="convnext_base",
     include_top=False,
     include_preprocessing=True,
