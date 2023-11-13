@@ -210,14 +210,14 @@ def train_model():
 
     externalNet = tf.keras.applications.ConvNeXtBase(
     model_name="convnext_base",
-    include_top=True,
+    include_top=False,
     include_preprocessing=True,
     weights="imagenet",
-    input_tensor=None,
-    input_shape=None,
+    #input_tensor=None,
+    input_shape=input_shape,
     pooling=None,
-    classes=1000,
-    classifier_activation="softmax",
+    #classes=1000,
+    #classifier_activation="softmax",
 )
 
     #Automatically get the name of the network
@@ -320,8 +320,7 @@ def train_model():
     #    print(i, layer.name, layer.trainable)
 
     # Freeze first N layers, e.g., until the 133rd one
-    N = 922 #Block 7
-    #N = 549 # Block 6
+    N = 270
     for i, layer in enumerate(ft_model.get_layer(network_keras_name).layers[:N]):
         layer.trainable=False
     for i, layer in enumerate(ft_model.get_layer(network_keras_name).layers):
