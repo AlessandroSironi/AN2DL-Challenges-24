@@ -320,7 +320,8 @@ def train_model():
     #    print(i, layer.name, layer.trainable)
 
     # Freeze first N layers, e.g., until the 133rd one
-    N = 270
+    #N = 270
+    N = 125
     for i, layer in enumerate(ft_model.get_layer(network_keras_name).layers[:N]):
         layer.trainable=False
     for i, layer in enumerate(ft_model.get_layer(network_keras_name).layers):
