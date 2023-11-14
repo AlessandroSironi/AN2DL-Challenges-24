@@ -44,7 +44,7 @@ from sklearn.preprocessing import LabelEncoder
 
 print("Finished loading libraries")
 
-model_name = "model_ConNeXt_large_2"
+model_name = "model_ConNeXt_large_2_ridge"
 
 class model:
     def __init__(self, path):
@@ -282,7 +282,7 @@ def train_model():
     reg_strength = 0.01
     outputs = tfkl.Dense(
             2, 
-            #kernel_regularizer=tfk.regularizers.l2(reg_strength),
+            kernel_regularizer=tfk.regularizers.l2(reg_strength),
             activation='softmax', 
             name='Output'
         )(x)
