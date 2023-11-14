@@ -44,7 +44,7 @@ from sklearn.preprocessing import LabelEncoder
 
 print("Finished loading libraries")
 
-model_name = "model_ConNeXt_large_2_ridge_2"
+model_name = "model_ConNeXt_large_2_ridge_3"
 
 class model:
     def __init__(self, path):
@@ -279,7 +279,7 @@ def train_model():
 
     x = tfkl.Dropout(0.2)(x)
     
-    reg_strength = 0.03
+    reg_strength = 0.01
     outputs = tfkl.Dense(
             2, 
             kernel_regularizer=tfk.regularizers.l2(reg_strength),
@@ -300,7 +300,7 @@ def train_model():
     tl_history = tl_model.fit(
         x = images_train, # We need to apply the preprocessing thought for the MobileNetV2 network
         y = labels_train,
-        batch_size = 32,
+        batch_size = 16,
         epochs = 1000,
         validation_data = (images_val, labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
         callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=100, restore_best_weights=True)]
@@ -335,7 +335,7 @@ def train_model():
     ft_history = ft_model.fit(
         x = images_train, # We need to apply the preprocessing thought for the MobileNetV2 network
         y = labels_train,
-        batch_size = 32,
+        batch_size = 16,
         epochs = 1000,
         validation_data = (images_val, labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
         callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=100, restore_best_weights=True)]
