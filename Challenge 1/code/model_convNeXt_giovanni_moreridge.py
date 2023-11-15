@@ -46,7 +46,7 @@ from sklearn.preprocessing import LabelEncoder
 
 print("Finished loading libraries")
 
-model_name = "model_ConNeXt_large_2_ridge_5"
+model_name = "model_convNeXt_giovanni_moreridge"
 
 class model:
     def __init__(self, path):
