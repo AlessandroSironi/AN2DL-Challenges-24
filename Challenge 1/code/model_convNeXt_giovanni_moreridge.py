@@ -1,7 +1,11 @@
+"""
+AN2DL - Homework 1
+Image Classification
 
+Group Name: TensorFlex
+Sironi Alessandro, Stefanizzi Giovanni, Stefanizzi Tomaso, Villa Ismaele
 
-import os
-
+"""
 #Fix randomness and hide warnings
 seed = 69420
 
@@ -22,7 +26,6 @@ import logging
 import random
 random.seed(seed)
 
-# Import tensorflow
 import tensorflow as tf
 from tensorflow import keras as tfk
 from tensorflow.keras import layers as tfkl
@@ -32,11 +35,7 @@ tf.get_logger().setLevel(logging.ERROR)
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 tf.random.set_seed(seed)
 tf.compat.v1.set_random_seed(seed)
-#print(tf.__version__)
 
-# Import other libraries
-#import cv2
-#from tensorflow.keras.applications.mobilenet import preprocess_input
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, confusion_matrix
@@ -64,9 +63,9 @@ class model:
 
 def show_images(images):
     # Show all images in in images array. Make a scrollable window if there are more than 50 images and display them in a grid
-    num_images = len(images)    # Number of images
+    num_images = 10    # Number of images
     num_cols = int(np.ceil(np.sqrt(num_images)))    # Number of columns in the grid
-    num_rows = int(np.ceil(num_images / num_cols))
+    num_rows = int(np.ceil(num_images / num_cols))  # Number of rows in the grid
 
     for i in range(num_images):
         plt.subplot(num_rows, num_cols, i+1)
@@ -74,8 +73,8 @@ def show_images(images):
         plt.axis('off')
     plt.show()
 
-def plot_results(history):
-    """ print("Plotting results...")
+def plot_results(history): #TODO: check if it works
+    print("Plotting results...")
     # Plot the training
     plt.figure(figsize=(15,5))
     plt.plot(history['loss'], alpha=.3, color='#ff7f0e', linestyle='--')
@@ -91,7 +90,7 @@ def plot_results(history):
     plt.title('Accuracy')
     plt.grid(alpha=.3)
 
-    plt.show() """
+    plt.show()
 
     # Find the epoch with the highest validation accuracy
     best_epoch = np.argmax(history['val_accuracy'])
@@ -118,32 +117,20 @@ def plot_results(history):
 
     plt.show()
 
+# description
+def mse(imageA, imageB):
+    # the 'Mean Squared Error' between the two images is the
+    # sum of the squared difference between the two images;
+    # NOTE: the two images must have the same dimension
+    err = np.sum((imageA.astype("float") - imageB.astype("float")) ** 2)
+    err /= float(imageA.shape[0] * imageA.shape[1])
 
-def train_model():
-    print("[*] Training model ", model_name, "...")
-    # Load images from the .npz file
-    data_path = 'public_data.npz'
-    data = np.load(data_path, allow_pickle=True)
+    # return the MSE, the lower the error, the more "similar"
+    # the two images are
+    return err
 
-    images = data['data']
-    labels = data['labels']
-
-    """ i = 0
-    for image in images:
-        # Normalize image pixel values to a float range [0, 1]
-        #images[i] = (images[i] / 255).astype(np.float32)
-
-        # Convert image from BGR to RGB
-        #images[i] = images[i][...,::-1]
-        i = i+1
-        if (i % 1000 == 0):
-            print("Processing image: ", i)
-    print("Finished processing images") """
-    # EfficientNetV2 models expect their inputs to be float tensors of pixels with values in the [0-255] range.
-    images = (images).astype(np.float32)
-
-    # ------------------------------------------
-    # Sanitize input
+# Sanitize input
+def sanitize_input(images):
     # Delete trolololol and shrek
     positions_to_remove_old = [58, 95, 137, 138, 171, 207, 338, 412, 434, 486, 506, 529, 571,
                            599, 622, 658, 692, 701, 723, 725, 753, 779, 783, 827, 840, 880,
@@ -163,22 +150,13 @@ def train_model():
                            4507, 4557, 4605, 4618, 4694, 4719, 4735, 4740, 4766, 4779, 4837,
                            4848, 4857, 4860, 4883, 4897, 4903, 4907, 4927, 5048, 5080, 5082,
                            5121, 5143, 5165, 5171]
-    def mse(imageA, imageB):
-        # the 'Mean Squared Error' between the two images is the
-        # sum of the squared difference between the two images;
-        # NOTE: the two images must have the same dimension
-        err = np.sum((imageA.astype("float") - imageB.astype("float")) ** 2)
-        err /= float(imageA.shape[0] * imageA.shape[1])
-
-        # return the MSE, the lower the error, the more "similar"
-        # the two images are
-        return err
+    
     positions_to_remove = []
 
-    pos_shrek = 58
-    pos_trolo = 338
+    pos_first_shrek = 58
+    pos_first_trolo = 338
     for pos in range(len(images)):
-        if (mse(images[pos_shrek],images[pos])==0 or mse(images[pos_trolo],images[pos])==0):
+        if (mse(images[pos_first_shrek],images[pos])==0 or mse(images[pos_first_trolo],images[pos])==0):
             positions_to_remove.append(pos)
     if (positions_to_remove != positions_to_remove_old):
         print("ERROR: Different positions to remove")
@@ -193,7 +171,23 @@ def train_model():
         labels = np.delete(labels, new_pos, axis=0)
         n = n + 1
 
-    # ------------------------------------------
+    return images
+
+
+
+def train_model():
+    print("[*] Training model ", model_name, "...")
+    # Load images from the .npz file
+    data_path = 'public_data.npz'
+    data = np.load(data_path, allow_pickle=True)
+
+    images = data['data']
+    labels = data['labels']
+
+    # EfficientNetV2 models expect their inputs to be float tensors of pixels with values in the [0-255] range.
+    images = (images).astype(np.float32)
+
+    images = sanitize_input(images)
 
     labels = np.array(labels)
 
@@ -222,13 +216,6 @@ def train_model():
     #print(f"Input Shape: {input_shape}, Output Shape: {output_shape}, Batch Size: {batch_size}, Epochs: {epochs}")
     # ------------------------------------------
     #if include_preprocessing=True no preprocessing is needed
-    """ efficientNet = tf.keras.applications.EfficientNetV2L(
-        include_top=False,
-        weights="imagenet",
-        input_shape=input_shape,
-        pooling=None,
-        include_preprocessing=True,
-    ) """
 
     externalNet = tf.keras.applications.ConvNeXtLarge(
         model_name="convnext_large",
@@ -245,20 +232,6 @@ def train_model():
     #Automatically get the name of the network
     network_keras_name = externalNet.name
     print("[*] Network name: ", network_keras_name)
-
-    """mobile = tf.keras.applications.MobileNetV3Large(
-        input_shape=None,
-        alpha=1.0,
-        minimalistic=False,
-        include_top=True,
-        weights="imagenet",
-        input_tensor=None,
-        classes=1000,
-        pooling=None,
-        dropout_rate=0.2,
-        classifier_activation="softmax",
-        include_preprocessing=True,
-    )"""
 
     for i, layer in enumerate(externalNet.layers):
         print(i, layer.name, layer.trainable)
@@ -283,19 +256,7 @@ def train_model():
 
     augmentation = augmentation(inputs)
 
-    #not needed
-    #scale_layer = tfkl.Rescaling(scale = 1/127.5, offset = -1)
-    #x = scale_layer(augmentation)
-
-    #x = mobile(augmentation)
     x = externalNet(augmentation)
-
-    """ x = tfkl.Conv2D (
-        filters = 128,
-        kernel_size = (3,3),
-        activation = 'relu',
-        name = 'Conv2D_1'
-    ) (x) """
 
     #x = tfkl.GlobalAveragePooling2D()(x)
 
