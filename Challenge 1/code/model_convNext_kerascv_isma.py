@@ -48,7 +48,7 @@ from sklearn.preprocessing import LabelEncoder
 
 print("Finished loading libraries")
 
-model_name = "model_ConNeXt_large_2_ridge"
+model_name = "model_convNext_kerascv_isma"
 
 class model:
     def __init__(self, path):
