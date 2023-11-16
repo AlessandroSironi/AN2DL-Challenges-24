@@ -44,7 +44,7 @@ from sklearn.preprocessing import LabelEncoder
 
 print("Finished loading libraries")
 
-model_name = "CNN_5_MobileNetV2_FT"
+model_name = "CNN_5_MobileNetV2_FT_16nov"
 
 class model:
     def __init__(self, path):
@@ -126,7 +126,7 @@ def train_model_mobile():
     images = data['data']
     labels = data['labels']
 
-    i = 0
+    """ i = 0
     for image in images: 
         # Normalize image pixel values to a float range [0, 1]
         images[i] = (images[i] / 255).astype(np.float32)
@@ -135,7 +135,8 @@ def train_model_mobile():
         i = i+1
         if (i % 1000 == 0):
             print("Processing image: ", i)
-    print("Finished processing images")
+    print("Finished processing images") """
+    images = images.astype(np.float32)
 
     # ------------------------------------------
     # Sanitize input
@@ -150,7 +151,7 @@ def train_model_mobile():
                            2426, 2435, 2451, 2453, 2487, 2496, 2515, 2564, 2581, 2593, 2596, 
                            2663, 2665, 2675, 2676, 2727, 2734, 2736, 2755, 2779, 2796, 2800, 
                            2830, 2831, 2839, 2864, 2866, 2889, 2913, 2929, 2937, 3033, 3049, 
-                           3055, 2086, 3105, 3108, 3144, 3155, 3286, 3376, 3410, 3436, 3451,
+                           3055, 3086, 3105, 3108, 3144, 3155, 3286, 3376, 3410, 3436, 3451,
                            3488, 3490, 3572, 3583, 3666, 3688, 3700, 3740, 3770, 3800, 3801, 
                            3802, 3806, 3811, 3821, 3835, 3862, 3885, 3896, 3899, 3904, 3927, 
                            3931, 3946, 3950, 3964, 3988, 3989, 4049, 4055, 4097, 4100, 4118, 

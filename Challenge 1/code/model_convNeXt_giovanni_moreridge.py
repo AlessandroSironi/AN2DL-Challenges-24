@@ -46,7 +46,7 @@ from sklearn.preprocessing import LabelEncoder
 
 print("Finished loading libraries")
 
-model_name = "model_convNeXt_giovanni_moreridge"
+model_name = "model_convNeXt_bestsub_16nov"
 
 class model:
     def __init__(self, path):
@@ -323,9 +323,9 @@ def train_model():
         x = images_train, # We need to apply the preprocessing thought for the MobileNetV2 network
         y = labels_train,
         batch_size = 32,
-        epochs = 200,
+        epochs = 1000,
         validation_data = (images_val, labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
-        callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=20, restore_best_weights=True)]
+        callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=100, restore_best_weights=True)]
     ).history
 
     # Save the best model
@@ -358,9 +358,9 @@ def train_model():
         x = images_train, # We need to apply the preprocessing thought for the MobileNetV2 network
         y = labels_train,
         batch_size = 32,
-        epochs = 50,
+        epochs = 1000,
         validation_data = (images_val, labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
-        callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=15, restore_best_weights=True)]
+        callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=100, restore_best_weights=True)]
     ).history
 
     # Save the model
@@ -400,13 +400,13 @@ def train_model():
         print('Recall:', recall.round(4))
         print('F1:', f1.round(4))
 
-        #print("\n0:Healthy, 1:Unhealthy\n")
+        print("\n0:Healthy, 1:Unhealthy\n")
         # Plot the confusion matrix
-        """ plt.figure(figsize=(10, 8))
+        plt.figure(figsize=(10, 8))
         sns.heatmap(cm.T, annot=True, xticklabels=np.unique(labels_test), yticklabels=np.unique(labels_test), cmap='Blues')
         plt.xlabel('True labels')
         plt.ylabel('Predicted labels')
-        plt.show() """
+        plt.show()
 
 # ------------------------------------------
 if __name__ == "__main__":
