@@ -6,7 +6,7 @@ Group Name: TensorFlex
 Sironi Alessandro, Stefanizzi Giovanni, Stefanizzi Tomaso, Villa Ismaele
 
 """
-#Fix randomness and hide warnings
+# Fix randomness and hide warnings
 seed = 69420
 
 import os
@@ -52,7 +52,6 @@ class model:
         self.model = tf.keras.models.load_model(os.path.join(path, model_name))
 
     def predict(self, X):
-
         # Note: this is just an example.
         # Here the model.predict is called, followed by the argmax
         out = self.model.predict(X)
@@ -61,9 +60,12 @@ class model:
         return out
 
 
+# The `show_images` function takes a list of images as input and displays a grid of up to 10 images using Matplotlib. 
+# The number of columns in the grid is determined by the square root of the total number of images (rounded up),
+# and the number of rows is calculated accordingly. The function then iterates through the images, plots each one in a subplot 
+# of the grid, turns off axis labels, and finally displays the entire grid of images using Matplotlib's `plt.show()` function.
 def show_images(images):
-    # Show all images in in images array. Make a scrollable window if there are more than 50 images and display them in a grid
-    num_images = 10    # Number of images
+    num_images = 10    # Number of images tp plot
     num_cols = int(np.ceil(np.sqrt(num_images)))    # Number of columns in the grid
     num_rows = int(np.ceil(num_images / num_cols))  # Number of rows in the grid
 
@@ -73,6 +75,9 @@ def show_images(images):
         plt.axis('off')
     plt.show()
 
+# The `plot_results` function visualizes training history for a neural network, displaying plots for loss and accuracy during
+# training and validation. It also highlights the epoch with the highest validation accuracy using a marker in the accuracy plot.
+# The function uses Matplotlib for plotting.
 def plot_results(history): #TODO: check if it works
     print("Plotting results...")
     # Plot the training
@@ -117,21 +122,21 @@ def plot_results(history): #TODO: check if it works
 
     plt.show()
 
-# description
+# >The 'mse' function returns the 'Mean Squared Error' between two images given as input
 def mse(imageA, imageB):
-    # the 'Mean Squared Error' between the two images is the
+    # The 'Mean Squared Error' between the two images is the
     # sum of the squared difference between the two images;
     # NOTE: the two images must have the same dimension
     err = np.sum((imageA.astype("float") - imageB.astype("float")) ** 2)
     err /= float(imageA.shape[0] * imageA.shape[1])
-
-    # return the MSE, the lower the error, the more "similar"
-    # the two images are
+    # Return the MSE, the lower the error, the more "similar" the two images are
     return err
 
-# Sanitize input
+# The 'sanitize_input' function removes all the outliers from the input dataset
 def sanitize_input(images):
     # Delete trolololol and shrek
+    # Positions_to_remove contains all the indexes of outliers in the dataset, those have been separatly calculated using the 'mse' function
+    # while here we are just checking that no outlier has been missed
     positions_to_remove_old = [58, 95, 137, 138, 171, 207, 338, 412, 434, 486, 506, 529, 571,
                            599, 622, 658, 692, 701, 723, 725, 753, 779, 783, 827, 840, 880,
                            898, 901, 961, 971, 974, 989, 1028, 1044, 1064, 1065, 1101, 1149,
@@ -152,18 +157,19 @@ def sanitize_input(images):
                            5121, 5143, 5165, 5171]
     
     positions_to_remove = []
-
     pos_first_shrek = 58
     pos_first_trolo = 338
+
     for pos in range(len(images)):
         if (mse(images[pos_first_shrek],images[pos])==0 or mse(images[pos_first_trolo],images[pos])==0):
             positions_to_remove.append(pos)
     if (positions_to_remove != positions_to_remove_old):
         print("ERROR: Different positions to remove")
         exit()
-    print("Len of positions_to_remove: ", len(positions_to_remove))
+    print("Removing " + str(len(positions_to_remove)) + 'outliers from the dataset...')
+    
     n = 0
-
+    # Let's remove those SHreks and Trolololol
     for pos in positions_to_remove:
         new_pos = pos - n
         #print("Removing image at position: ", pos, " - New Position is ", new_pos)
@@ -174,75 +180,76 @@ def sanitize_input(images):
     return images
 
 
+# The `train_model` function performs the following tasks in Python:
+# 1. Loads image data from a .npz file, applies preprocessing, and encodes labels.
+# 2. Splits the dataset into training, validation, and test sets.
+# 3. Builds a ConvNeXtLarge model for transfer learning with image augmentation.
+# 4. Trains the model on the training set, saves the best model, and reloads it.
+# 5. Fine-tunes the model by setting specific layers as trainable and freezing others.
+# 6. Compiles and trains the fine-tuned model.
+# 7. Optionally plots training history graphs.
+# 8. Evaluates the model on the test set, computes and displays classification metrics, and plots a confusion matrix.
 
 def train_model():
     print("[*] Training model ", model_name, "...")
     # Load images from the .npz file
     data_path = 'public_data.npz'
     data = np.load(data_path, allow_pickle=True)
-
     images = data['data']
     labels = data['labels']
 
-    # EfficientNetV2 models expect their inputs to be float tensors of pixels with values in the [0-255] range.
+    # ConvNeXt models expect their inputs to be float tensors of pixels with values in the [0-255] range so let's cast the images
     images = (images).astype(np.float32)
 
+    # sanitize input
     images = sanitize_input(images)
 
+    # Let's encode to the labels as we want them to be a 2D array of type [[0,1],[1,0],[1,0],...]
     labels = np.array(labels)
-
     labels = LabelEncoder().fit_transform(labels)
     labels = tfk.utils.to_categorical(labels,len(np.unique(labels)))
 
-    # Use the stratify option to maintain the class distribution in the train and test datasets
+    #  Split the dataset in train set and test set, use the stratify option to maintain the class distribution in the train and test datasets
     images_train, images_test, labels_train, labels_test = train_test_split(images, labels, test_size=0.15, stratify=np.argmax(labels, axis=1), random_state=seed)
 
     # Further split the test set into test and validation sets, stratifying the labels
     images_test, images_val, labels_test, labels_val = train_test_split(images_test, labels_test, test_size=0.9, stratify=np.argmax(labels_test, axis=1), random_state=seed)
 
-    print("\n\nSHAPES OF THE SETS:\n")
-
+    print("Shapes of the sets:")
     print(f"images_train shape: {images_train.shape}, labels_train shape: {labels_train.shape}")
     print(f"images_val shape: {images_val.shape}, labels_val shape: {labels_val.shape}")
     print(f"images_test shape: {images_test.shape}, labels_test shape: {labels_test.shape}")
-
-    print("\n\n")
+    print("\n")
 
     input_shape = images_train.shape[1:]
     output_shape = labels_train.shape[1:]
 
-    # ------------------------------------------
-    #Print input shape, batch size, and number of epochs
-    #print(f"Input Shape: {input_shape}, Output Shape: {output_shape}, Batch Size: {batch_size}, Epochs: {epochs}")
-    # ------------------------------------------
-    #if include_preprocessing=True no preprocessing is needed
+    # Let's build the model
 
+    # If include_preprocessing=True no preprocessing is needed
     externalNet = tf.keras.applications.ConvNeXtLarge(
         model_name="convnext_large",
         include_top=False,
         include_preprocessing=True,
         weights="imagenet",
-        #input_tensor=None,
         input_shape=input_shape,
         pooling="avg",
-        #classes=1000,
-        #classifier_activation="softmax",
     )
 
-    #Automatically get the name of the network
+    #A utomatically get the name of the network
     network_keras_name = externalNet.name
     print("[*] Network name: ", network_keras_name)
 
     for i, layer in enumerate(externalNet.layers):
         print(i, layer.name, layer.trainable)
 
-    #tfk.utils.plot_model(mobile, show_shapes=True)
     # Use the supernet as feature extractor, i.e. freeze all its weigths
     externalNet.trainable = False
 
-    # Create an input layer with shape (224, 224, 3)
+    # Create an input layer with standard shape (96, 96, 3)
     inputs = tfk.Input(shape=(96, 96, 3))
 
+    # Perform image augmentation
     augmentation = tf.keras.Sequential([
             #tfkl.RandomBrightness(0.2, value_range=(0,1)),
             tfkl.RandomTranslation(0.15,0.15),
@@ -258,11 +265,12 @@ def train_model():
 
     x = externalNet(augmentation)
 
+    # GAP layer only if pooling=None in ConvNeXtLarge parameters
     #x = tfkl.GlobalAveragePooling2D()(x)
 
     x = tfkl.Dropout(0.3)(x)
 
-    reg_strength = 0.07
+    reg_strength = 0.03
     outputs = tfkl.Dense(
             2,
             kernel_regularizer=tfk.regularizers.l2(reg_strength),
@@ -297,13 +305,12 @@ def train_model():
     ft_model = tfk.models.load_model('TransferLearningModel')
     ft_model.summary()
 
-    # Set all MobileNetV2 layers as trainable
+    # Set all ConvNeXtLarge layers as trainable
     ft_model.get_layer(network_keras_name).trainable = True
     #for i, layer in enumerate(ft_model.get_layer('mobilenetv2_1.00_96').layers):
     #    print(i, layer.name, layer.trainable)
 
-    # Freeze first N layers, e.g., until the 133rd one
-    #N = 270
+    # Freeze first N layers, e.g., until the 125th one
     N = 125
     for i, layer in enumerate(ft_model.get_layer(network_keras_name).layers[:N]):
         layer.trainable=False
@@ -316,30 +323,26 @@ def train_model():
 
     # Fine-tune the model
     ft_history = ft_model.fit(
-        x = images_train, # We need to apply the preprocessing thought for the MobileNetV2 network
+        x = images_train,
         y = labels_train,
         batch_size = 32,
         epochs = 1000,
-        validation_data = (images_val, labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
+        validation_data = (images_val, labels_val), 
         callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=100, restore_best_weights=True)]
     ).history
 
     # Save the model
     ft_model.save(model_name)
 
-    # ------------------------------------------
+    # Set plot_result=True to plot accuracy and loss graphs
     plot_result = False
     if plot_result:
         plot_results(ft_history)
-    # ------------------------------------------
 
     evaluate = True
     if evaluate:
         # Evaluate the model on the test set
-        # Copilot generated version:
-        # test_loss, test_acc = model.evaluate(images_test, labels_test, verbose=2)
 
-        # Notebooks version:
         # Predict labels for the entire test set
         predictions = ft_model.predict(images_test, verbose=0)
 
@@ -362,6 +365,7 @@ def train_model():
         print('F1:', f1.round(4))
 
         print("\n0:Healthy, 1:Unhealthy\n")
+
         # Plot the confusion matrix
         plt.figure(figsize=(10, 8))
         sns.heatmap(cm.T, annot=True, xticklabels=np.unique(labels_test), yticklabels=np.unique(labels_test), cmap='Blues')
@@ -376,34 +380,5 @@ if __name__ == "__main__":
         train_model()
     else:
         print("No training :(")
-    #_model = model(os.getcwd())
-
-    """ # Load images from the .npz file
-    __data_path = 'Challenge 1/data/phase_1/public_data.npz'
-    __data = np.load(__data_path, allow_pickle=True)
-
-    __images = __data['data']
-    __labels = __data['labels']
-
-    i = 0
-    for __image in __images:
-        # Normalize image pixel values to a float range [0, 1]
-        __images[i] = (__images[i] / 255).astype(np.float32)
-        # Convert image from BGR to RGB
-        __images[i] = __images[i][...,::-1]
-        if (i % 100 == 0):
-            print("Processing image: ", i, "\n")
-            #pred = _model.predict(__image)
-            #print("Prediction: ", pred, " - Label: ", __labels[i])
-        i = i+1
-
-    # print the shape of __images
-    print(__images.shape)
-
-    pred = _model.predict(__images)
-    print(pred)
-
-    for y in pred:
-        print(y, "\n") """
 
     print("Done!")
