@@ -294,10 +294,13 @@ def train_model():
         x = images_train, # We need to apply the preprocessing thought for the MobileNetV2 network
         y = labels_train,
         batch_size = 32,
-        epochs = 500,
+        epochs = 1,
         validation_data = (images_val, labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
-        callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=100, restore_best_weights=True)]
+        callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=1, restore_best_weights=True)]
     ).history
+
+    #TODO: delete this, it's just to check if it is working
+    plot_results(ft_history)
 
     # Save the best model
     tl_model.save('TransferLearningModel')
