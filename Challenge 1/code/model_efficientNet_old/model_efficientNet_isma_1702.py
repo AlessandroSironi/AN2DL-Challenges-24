@@ -42,9 +42,9 @@ import seaborn as sns
 
 from sklearn.preprocessing import LabelEncoder
 
-print("[*] Finished loading libraries")
+print("Finished loading libraries")
 
-model_name = "CNN_efficientNet_L"
+model_name = "model_efficientNet_isma_1702"
 
 class model:
     def __init__(self, path):
@@ -117,8 +117,8 @@ def plot_results(history):
     plt.show()
     
 
-def train_model():
-    print("[*] Training model ", model_name, "...")
+def train_model_mobile():
+    print("Training model with efficientNet...")
     # Load images from the .npz file
     data_path = 'public_data.npz'
     data = np.load(data_path, allow_pickle=True)
@@ -173,7 +173,7 @@ def train_model():
 
     # ------------------------------------------
 
-    labels = np.array(labels)
+    labels = np.array(labels) 
 
     labels = LabelEncoder().fit_transform(labels)
     labels = tfk.utils.to_categorical(labels,len(np.unique(labels)))
@@ -200,17 +200,13 @@ def train_model():
     #print(f"Input Shape: {input_shape}, Output Shape: {output_shape}, Batch Size: {batch_size}, Epochs: {epochs}")
     # ------------------------------------------
     #if include_preprocessing=True no preprocessing is needed
-    efficientNet = tf.keras.applications.EfficientNetV2L(
+    efficientNet = tf.keras.applications.EfficientNetV2S(
         include_top=False,
         weights="imagenet",
         input_shape=input_shape,
-        pooling="avg",
+        pooling=None,
         include_preprocessing=True,
     )
-
-    #Automatically get the name of the network
-    network_keras_name = efficientNet.name
-    print("[*] Network name: ", network_keras_name)
 
     """mobile = tf.keras.applications.MobileNetV3Large(
         input_shape=None,
@@ -235,16 +231,15 @@ def train_model():
 
     augmentation = tf.keras.Sequential([
             #tfkl.RandomBrightness(0.2, value_range=(0,1)),
-            tfkl.RandomTranslation(0.15,0.15),
+            tfkl.RandomTranslation(0.2,0.2),
             #tfkl.RandomContrast(0.75),
-            # Set RandomBrightness to have an upper bound of 0.2
-            tfkl.RandomBrightness(0.1),
-            tfkl.RandomZoom(0.15),
+            tfkl.RandomZoom(0.2),
             tfkl.RandomFlip("horizontal"),
         ], name='preprocessing')
     
     augmentation = augmentation(inputs)
 
+    #not needed
     #scale_layer = tfkl.Rescaling(scale = 1/127.5, offset = -1)
     #x = scale_layer(augmentation)
 
@@ -258,7 +253,7 @@ def train_model():
         name = 'Conv2D_1'
     ) (x) """
 
-    #x = tfkl.GlobalAveragePooling2D()(x)
+    x = tfkl.GlobalAveragePooling2D()(x)
 
     x = tfkl.Dropout(0.2)(x)
     
@@ -282,7 +277,7 @@ def train_model():
         x = images_train, # We need to apply the preprocessing thought for the MobileNetV2 network
         y = labels_train,
         batch_size = 32,
-        epochs = 1000,
+        epochs = 200,
         validation_data = (images_val, labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
         callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=20, restore_best_weights=True)]
     ).history
@@ -296,18 +291,16 @@ def train_model():
     ft_model.summary()
 
     # Set all MobileNetV2 layers as trainable
-    ft_model.get_layer(network_keras_name).trainable = True
+    ft_model.get_layer('efficientnetv2-s').trainable = True
     #for i, layer in enumerate(ft_model.get_layer('mobilenetv2_1.00_96').layers):
     #    print(i, layer.name, layer.trainable)
 
     # Freeze first N layers, e.g., until the 133rd one
-    num_total_layers = len(ft_model.get_layer(network_keras_name).layers)
-    N = 20
-    num_layers_not_to_train = num_total_layers - N
-    for i, layer in enumerate(ft_model.get_layer(network_keras_name).layers[:num_layers_not_to_train]):
+    N = 154
+    for i, layer in enumerate(ft_model.get_layer('efficientnetv2-s').layers[:N]):
         layer.trainable=False
-    for i, layer in enumerate(ft_model.get_layer(network_keras_name).layers):
-        print(i, layer.name, layer.trainable)
+    """ for i, layer in enumerate(ft_model.get_layer('efficientnetv2-s').layers):
+        print(i, layer.name, layer.trainable) """
     ft_model.summary()
 
     # Compile the model
@@ -318,17 +311,16 @@ def train_model():
         x = images_train, # We need to apply the preprocessing thought for the MobileNetV2 network
         y = labels_train,
         batch_size = 32,
-        epochs = 1000,
+        epochs = 200,
         validation_data = (images_val, labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
         callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=20, restore_best_weights=True)]
     ).history
 
     # Save the model
-    print("Saving model...")
     ft_model.save(model_name)
 
     # ------------------------------------------
-    plot_result = True
+    plot_result = False
     if plot_result:
         plot_results(ft_history)
     # ------------------------------------------
@@ -361,19 +353,19 @@ def train_model():
         print('Recall:', recall.round(4))
         print('F1:', f1.round(4))
 
-        print("\n0:Healthy, 1:Unhealthy\n")
+        #print("\n0:Healthy, 1:Unhealthy\n")
         # Plot the confusion matrix
-        plt.figure(figsize=(10, 8))
+        """ plt.figure(figsize=(10, 8))
         sns.heatmap(cm.T, annot=True, xticklabels=np.unique(labels_test), yticklabels=np.unique(labels_test), cmap='Blues')
         plt.xlabel('True labels')
         plt.ylabel('Predicted labels')
-        plt.show()
+        plt.show() """
 
 # ------------------------------------------
 if __name__ == "__main__":
     train = True
     if (train):
-        train_model()
+        train_model_mobile()
     else:
         print("No training :(")
     #_model = model(os.getcwd())
@@ -405,4 +397,5 @@ if __name__ == "__main__":
 
     for y in pred:
         print(y, "\n") """
+
     print("Done!")

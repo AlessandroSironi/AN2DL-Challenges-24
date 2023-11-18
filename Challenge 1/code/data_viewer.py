@@ -7,6 +7,8 @@ data = np.load('public_data.npz', allow_pickle=True)
 images = data['data']
 labels = data['labels']
 
+print("Number of images: ", len(images))
+
 i = 0
 for image in images: 
     # Normalize image pixel values to a float range [0, 1]

@@ -44,7 +44,7 @@ from sklearn.preprocessing import LabelEncoder
 
 print("Finished loading libraries")
 
-model_name = "CNN_6_efficientNet"
+model_name = "model_efficientNet_ridge"
 
 class model:
     def __init__(self, path):
@@ -117,8 +117,8 @@ def plot_results(history):
     plt.show()
     
 
-def train_model_mobile():
-    print("Training model with efficientNet...")
+def train_model():
+    print("[*] Training model ", model_name, "...")
     # Load images from the .npz file
     data_path = 'public_data.npz'
     data = np.load(data_path, allow_pickle=True)
@@ -129,13 +129,16 @@ def train_model_mobile():
     """ i = 0
     for image in images: 
         # Normalize image pixel values to a float range [0, 1]
-        images[i] = (images[i] / 255).astype(np.float32)
+        #images[i] = (images[i] / 255).astype(np.float32)
+        
         # Convert image from BGR to RGB
         #images[i] = images[i][...,::-1]
         i = i+1
         if (i % 1000 == 0):
             print("Processing image: ", i)
     print("Finished processing images") """
+    # EfficientNetV2 models expect their inputs to be float tensors of pixels with values in the [0-255] range.
+    images = (images).astype(np.float32)
 
     # ------------------------------------------
     # Sanitize input
@@ -170,16 +173,16 @@ def train_model_mobile():
 
     # ------------------------------------------
 
-    labels = np.array(labels) #TODO: Check if needed
+    labels = np.array(labels) 
 
     labels = LabelEncoder().fit_transform(labels)
     labels = tfk.utils.to_categorical(labels,len(np.unique(labels)))
 
     # Use the stratify option to maintain the class distribution in the train and test datasets
-    images_train, images_test, labels_train, labels_test = train_test_split(images, labels, test_size=0.2, stratify=np.argmax(labels, axis=1), random_state=seed)
+    images_train, images_test, labels_train, labels_test = train_test_split(images, labels, test_size=0.15, stratify=np.argmax(labels, axis=1), random_state=seed)
 
     # Further split the test set into test and validation sets, stratifying the labels
-    images_test, images_val, labels_test, labels_val = train_test_split(images_test, labels_test, test_size=0.5, stratify=np.argmax(labels_test, axis=1), random_state=seed)
+    images_test, images_val, labels_test, labels_val = train_test_split(images_test, labels_test, test_size=0.9, stratify=np.argmax(labels_test, axis=1), random_state=seed)
 
     print("\n\nSHAPES OF THE SETS:\n")
 
@@ -196,14 +199,18 @@ def train_model_mobile():
     #Print input shape, batch size, and number of epochs
     #print(f"Input Shape: {input_shape}, Output Shape: {output_shape}, Batch Size: {batch_size}, Epochs: {epochs}")
     # ------------------------------------------
-
-    mobile = tf.keras.applications.EfficientNetV2M(
+    #if include_preprocessing=True no preprocessing is needed
+    efficientNet = tf.keras.applications.EfficientNetV2L(
         include_top=False,
         weights="imagenet",
         input_shape=input_shape,
-        pooling="avg",
+        pooling=None,
         include_preprocessing=True,
     )
+
+    #Automatically get the name of the network
+    network_keras_name = efficientNet.name
+    print("[*] Network name: ", network_keras_name)
 
     """mobile = tf.keras.applications.MobileNetV3Large(
         input_shape=None,
@@ -218,29 +225,52 @@ def train_model_mobile():
         classifier_activation="softmax",
         include_preprocessing=True,
     )"""
+
+    for i, layer in enumerate(efficientNet.layers):
+        print(i, layer.name, layer.trainable)
     
     #tfk.utils.plot_model(mobile, show_shapes=True)
     # Use the supernet as feature extractor, i.e. freeze all its weigths
-    mobile.trainable = False
+    efficientNet.trainable = False
 
     # Create an input layer with shape (224, 224, 3)
     inputs = tfk.Input(shape=(96, 96, 3))
 
     augmentation = tf.keras.Sequential([
             #tfkl.RandomBrightness(0.2, value_range=(0,1)),
-            #tfkl.RandomTranslation(0.2,0.2),
+            tfkl.RandomTranslation(0.2,0.2),
             #tfkl.RandomContrast(0.75),
+            tfkl.RandomBrightness(0.15),
             tfkl.RandomZoom(0.2),
             tfkl.RandomFlip("horizontal"),
+            tfkl.RandomFlip("vertical"),
+            tfkl.RandomRotation(0.2),
         ], name='preprocessing')
     
     augmentation = augmentation(inputs)
 
+    #not needed
+    #scale_layer = tfkl.Rescaling(scale = 1/127.5, offset = -1)
+    #x = scale_layer(augmentation)
+
     #x = mobile(augmentation)
-    x = mobile(inputs)
+    x = efficientNet(augmentation)
+
+    """ x = tfkl.Conv2D (
+        filters = 128,
+        kernel_size = (3,3),
+        activation = 'relu',
+        name = 'Conv2D_1'
+    ) (x) """
+
+    x = tfkl.GlobalAveragePooling2D()(x)
+
+    x = tfkl.Dropout(0.2)(x)
     
+    reg_strength = 0.01
     outputs = tfkl.Dense(
             2, 
+            kernel_regularizer=tfk.regularizers.l2(reg_strength),
             activation='softmax', 
             name='Output'
         )(x)
@@ -253,17 +283,14 @@ def train_model_mobile():
     tl_model.compile(loss=tfk.losses.CategoricalCrossentropy(), optimizer=tfk.optimizers.Adam(), metrics=['accuracy'])
 
     # Display model summary
-    #tl_model.summary()
-
-    # Display model summary
     tl_model.summary()
     # Train the model
     tl_history = tl_model.fit(
-        x = preprocess_input(images_train), # We need to apply the preprocessing thought for the MobileNetV2 network
+        x = images_train, # We need to apply the preprocessing thought for the MobileNetV2 network
         y = labels_train,
         batch_size = 32,
         epochs = 1000,
-        validation_data = (preprocess_input(images_val), labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
+        validation_data = (images_val, labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
         callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=100, restore_best_weights=True)]
     ).history
 
@@ -276,16 +303,17 @@ def train_model_mobile():
     ft_model.summary()
 
     # Set all MobileNetV2 layers as trainable
-    ft_model.get_layer('efficientnetv2-m').trainable = True
+    ft_model.get_layer(network_keras_name).trainable = True
     #for i, layer in enumerate(ft_model.get_layer('mobilenetv2_1.00_96').layers):
     #    print(i, layer.name, layer.trainable)
 
     # Freeze first N layers, e.g., until the 133rd one
-    N = 133
-    for i, layer in enumerate(ft_model.get_layer('efficientnetv2-m').layers[:N]):
+    N = 922 #Block 7
+    #N = 549 # Block 6
+    for i, layer in enumerate(ft_model.get_layer(network_keras_name).layers[:N]):
         layer.trainable=False
-    #for i, layer in enumerate(ft_model.get_layer('mobilenetv2_1.00_96').layers):
-    #    print(i, layer.name, layer.trainable)
+    for i, layer in enumerate(ft_model.get_layer(network_keras_name).layers):
+        print(i, layer.name, layer.trainable)
     ft_model.summary()
 
     # Compile the model
@@ -293,11 +321,11 @@ def train_model_mobile():
 
     # Fine-tune the model
     ft_history = ft_model.fit(
-        x = preprocess_input(images_train), # We need to apply the preprocessing thought for the MobileNetV2 network
+        x = images_train, # We need to apply the preprocessing thought for the MobileNetV2 network
         y = labels_train,
         batch_size = 32,
         epochs = 1000,
-        validation_data = (preprocess_input(images_val), labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
+        validation_data = (images_val, labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
         callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=100, restore_best_weights=True)]
     ).history
 
@@ -305,7 +333,7 @@ def train_model_mobile():
     ft_model.save(model_name)
 
     # ------------------------------------------
-    plot_result = True
+    plot_result = False
     if plot_result:
         plot_results(ft_history)
     # ------------------------------------------
@@ -318,7 +346,7 @@ def train_model_mobile():
 
         # Notebooks version:
         # Predict labels for the entire test set
-        predictions = ft_model.predict(preprocess_input(images_test*255), verbose=0)
+        predictions = ft_model.predict(images_test, verbose=0)
 
         # Display the shape of the predictions
         print("Predictions Shape:", predictions.shape)
@@ -338,19 +366,19 @@ def train_model_mobile():
         print('Recall:', recall.round(4))
         print('F1:', f1.round(4))
 
-        print("\n0:Healthy, 1:Unhealthy\n")
+        #print("\n0:Healthy, 1:Unhealthy\n")
         # Plot the confusion matrix
-        plt.figure(figsize=(10, 8))
+        """ plt.figure(figsize=(10, 8))
         sns.heatmap(cm.T, annot=True, xticklabels=np.unique(labels_test), yticklabels=np.unique(labels_test), cmap='Blues')
         plt.xlabel('True labels')
         plt.ylabel('Predicted labels')
-        plt.show()
+        plt.show() """
 
 # ------------------------------------------
 if __name__ == "__main__":
     train = True
     if (train):
-        train_model_mobile()
+        train_model()
     else:
         print("No training :(")
     #_model = model(os.getcwd())

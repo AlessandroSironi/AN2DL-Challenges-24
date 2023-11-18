@@ -44,7 +44,7 @@ from sklearn.preprocessing import LabelEncoder
 
 print("[*] Finished loading libraries")
 
-model_name = "CNN_efficientNet_L"
+model_name = "CNN_efficientNet_M"
 
 class model:
     def __init__(self, path):
@@ -200,7 +200,7 @@ def train_model():
     #print(f"Input Shape: {input_shape}, Output Shape: {output_shape}, Batch Size: {batch_size}, Epochs: {epochs}")
     # ------------------------------------------
     #if include_preprocessing=True no preprocessing is needed
-    efficientNet = tf.keras.applications.EfficientNetV2L(
+    efficientNet = tf.keras.applications.EfficientNetV2M(
         include_top=False,
         weights="imagenet",
         input_shape=input_shape,
@@ -284,7 +284,7 @@ def train_model():
         batch_size = 32,
         epochs = 1000,
         validation_data = (images_val, labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
-        callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=20, restore_best_weights=True)]
+        callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=100, restore_best_weights=True)]
     ).history
 
     # Save the best model
@@ -306,8 +306,8 @@ def train_model():
     num_layers_not_to_train = num_total_layers - N
     for i, layer in enumerate(ft_model.get_layer(network_keras_name).layers[:num_layers_not_to_train]):
         layer.trainable=False
-    for i, layer in enumerate(ft_model.get_layer(network_keras_name).layers):
-        print(i, layer.name, layer.trainable)
+    #for i, layer in enumerate(ft_model.get_layer(network_keras_name).layers):
+    #    print(i, layer.name, layer.trainable)
     ft_model.summary()
 
     # Compile the model
@@ -320,11 +320,10 @@ def train_model():
         batch_size = 32,
         epochs = 1000,
         validation_data = (images_val, labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
-        callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=20, restore_best_weights=True)]
+        callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=100, restore_best_weights=True)]
     ).history
 
     # Save the model
-    print("Saving model...")
     ft_model.save(model_name)
 
     # ------------------------------------------
@@ -405,4 +404,5 @@ if __name__ == "__main__":
 
     for y in pred:
         print(y, "\n") """
+
     print("Done!")

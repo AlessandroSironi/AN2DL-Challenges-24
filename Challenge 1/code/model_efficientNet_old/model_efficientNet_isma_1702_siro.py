@@ -42,9 +42,9 @@ import seaborn as sns
 
 from sklearn.preprocessing import LabelEncoder
 
-print("[*] Finished loading libraries")
+print("Finished loading libraries")
 
-model_name = "CNN_efficientNet_L"
+model_name = "model_efficientNet_isma_1702_revsiro_4"
 
 class model:
     def __init__(self, path):
@@ -173,16 +173,16 @@ def train_model():
 
     # ------------------------------------------
 
-    labels = np.array(labels)
+    labels = np.array(labels) 
 
     labels = LabelEncoder().fit_transform(labels)
     labels = tfk.utils.to_categorical(labels,len(np.unique(labels)))
 
     # Use the stratify option to maintain the class distribution in the train and test datasets
-    images_train, images_test, labels_train, labels_test = train_test_split(images, labels, test_size=0.2, stratify=np.argmax(labels, axis=1), random_state=seed)
+    images_train, images_test, labels_train, labels_test = train_test_split(images, labels, test_size=0.15, stratify=np.argmax(labels, axis=1), random_state=seed)
 
     # Further split the test set into test and validation sets, stratifying the labels
-    images_test, images_val, labels_test, labels_val = train_test_split(images_test, labels_test, test_size=0.5, stratify=np.argmax(labels_test, axis=1), random_state=seed)
+    images_test, images_val, labels_test, labels_val = train_test_split(images_test, labels_test, test_size=0.9, stratify=np.argmax(labels_test, axis=1), random_state=seed)
 
     print("\n\nSHAPES OF THE SETS:\n")
 
@@ -204,7 +204,7 @@ def train_model():
         include_top=False,
         weights="imagenet",
         input_shape=input_shape,
-        pooling="avg",
+        pooling=None,
         include_preprocessing=True,
     )
 
@@ -225,6 +225,9 @@ def train_model():
         classifier_activation="softmax",
         include_preprocessing=True,
     )"""
+
+    for i, layer in enumerate(efficientNet.layers):
+        print(i, layer.name, layer.trainable)
     
     #tfk.utils.plot_model(mobile, show_shapes=True)
     # Use the supernet as feature extractor, i.e. freeze all its weigths
@@ -235,16 +238,18 @@ def train_model():
 
     augmentation = tf.keras.Sequential([
             #tfkl.RandomBrightness(0.2, value_range=(0,1)),
-            tfkl.RandomTranslation(0.15,0.15),
+            tfkl.RandomTranslation(0.2,0.2),
             #tfkl.RandomContrast(0.75),
-            # Set RandomBrightness to have an upper bound of 0.2
-            tfkl.RandomBrightness(0.1),
-            tfkl.RandomZoom(0.15),
+            tfkl.RandomBrightness(0.15),
+            tfkl.RandomZoom(0.2),
             tfkl.RandomFlip("horizontal"),
+            tfkl.RandomFlip("vertical"),
+            tfkl.RandomRotation(0.2),
         ], name='preprocessing')
     
     augmentation = augmentation(inputs)
 
+    #not needed
     #scale_layer = tfkl.Rescaling(scale = 1/127.5, offset = -1)
     #x = scale_layer(augmentation)
 
@@ -258,7 +263,7 @@ def train_model():
         name = 'Conv2D_1'
     ) (x) """
 
-    #x = tfkl.GlobalAveragePooling2D()(x)
+    x = tfkl.GlobalAveragePooling2D()(x)
 
     x = tfkl.Dropout(0.2)(x)
     
@@ -281,10 +286,10 @@ def train_model():
     tl_history = tl_model.fit(
         x = images_train, # We need to apply the preprocessing thought for the MobileNetV2 network
         y = labels_train,
-        batch_size = 32,
+        batch_size = 16,
         epochs = 1000,
         validation_data = (images_val, labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
-        callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=20, restore_best_weights=True)]
+        callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=100, restore_best_weights=True)]
     ).history
 
     # Save the best model
@@ -301,10 +306,9 @@ def train_model():
     #    print(i, layer.name, layer.trainable)
 
     # Freeze first N layers, e.g., until the 133rd one
-    num_total_layers = len(ft_model.get_layer(network_keras_name).layers)
-    N = 20
-    num_layers_not_to_train = num_total_layers - N
-    for i, layer in enumerate(ft_model.get_layer(network_keras_name).layers[:num_layers_not_to_train]):
+    #N = 922 #Block 7
+    N = 549 # Block 6
+    for i, layer in enumerate(ft_model.get_layer(network_keras_name).layers[:N]):
         layer.trainable=False
     for i, layer in enumerate(ft_model.get_layer(network_keras_name).layers):
         print(i, layer.name, layer.trainable)
@@ -317,18 +321,17 @@ def train_model():
     ft_history = ft_model.fit(
         x = images_train, # We need to apply the preprocessing thought for the MobileNetV2 network
         y = labels_train,
-        batch_size = 32,
+        batch_size = 16,
         epochs = 1000,
         validation_data = (images_val, labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
-        callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=20, restore_best_weights=True)]
+        callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=100, restore_best_weights=True)]
     ).history
 
     # Save the model
-    print("Saving model...")
     ft_model.save(model_name)
 
     # ------------------------------------------
-    plot_result = True
+    plot_result = False
     if plot_result:
         plot_results(ft_history)
     # ------------------------------------------
@@ -361,13 +364,13 @@ def train_model():
         print('Recall:', recall.round(4))
         print('F1:', f1.round(4))
 
-        print("\n0:Healthy, 1:Unhealthy\n")
+        #print("\n0:Healthy, 1:Unhealthy\n")
         # Plot the confusion matrix
-        plt.figure(figsize=(10, 8))
+        """ plt.figure(figsize=(10, 8))
         sns.heatmap(cm.T, annot=True, xticklabels=np.unique(labels_test), yticklabels=np.unique(labels_test), cmap='Blues')
         plt.xlabel('True labels')
         plt.ylabel('Predicted labels')
-        plt.show()
+        plt.show() """
 
 # ------------------------------------------
 if __name__ == "__main__":
@@ -405,4 +408,5 @@ if __name__ == "__main__":
 
     for y in pred:
         print(y, "\n") """
+
     print("Done!")
