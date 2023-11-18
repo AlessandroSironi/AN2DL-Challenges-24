@@ -78,7 +78,7 @@ def show_images(images):
 # The `plot_results` function visualizes training history for a neural network, displaying plots for loss and accuracy during
 # training and validation. It also highlights the epoch with the highest validation accuracy using a marker in the accuracy plot.
 # The function uses Matplotlib for plotting.
-def plot_results(history): #TODO: check if it works
+def plot_results(history):
     print("Plotting results...")
     # Plot the training
     plt.figure(figsize=(15,5))
@@ -294,13 +294,10 @@ def train_model():
         x = images_train, # We need to apply the preprocessing thought for the MobileNetV2 network
         y = labels_train,
         batch_size = 32,
-        epochs = 1,
+        epochs = 500,
         validation_data = (images_val, labels_val), # We need to apply the preprocessing thought for the MobileNetV2 network
-        callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=1, restore_best_weights=True)]
+        callbacks = [tfk.callbacks.EarlyStopping(monitor='val_accuracy', mode='max', patience=100, restore_best_weights=True)]
     ).history
-
-    #TODO: delete this, it's just to check if it is working
-    plot_results(ft_history)
 
     # Save the best model
     tl_model.save('TransferLearningModel')
