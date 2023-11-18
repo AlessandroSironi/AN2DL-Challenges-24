@@ -169,7 +169,7 @@ def sanitize_input(images,labels):
     print("Removing " + str(len(positions_to_remove)) + ' outliers from the dataset...')
     
     n = 0
-    # Let's remove those SHreks and Trolololol
+    # Let's remove those Shreks and Trolololol
     for pos in positions_to_remove:
         new_pos = pos - n
         #print("Removing image at position: ", pos, " - New Position is ", new_pos)
@@ -236,10 +236,11 @@ def train_model():
         pooling=None,
     )
 
-    #A utomatically get the name of the network
+    # Automatically get the name of the network
     network_keras_name = externalNet.name
     print("[*] Network name: ", network_keras_name)
 
+    # Print the layers of the network
     for i, layer in enumerate(externalNet.layers):
         print(i, layer.name, layer.trainable)
 
