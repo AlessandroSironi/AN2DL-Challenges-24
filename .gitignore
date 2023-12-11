@@ -168,3 +168,5 @@ Challenge\ 1/data/
 #Configs
 configs/
 *.npz
+#othersS
+*.npy
